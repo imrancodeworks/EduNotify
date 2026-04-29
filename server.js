@@ -20,14 +20,16 @@ const EMAIL_PASS = 'zdvkvtmdrlbcgbbm';
 
 const mailer = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // true for 465, false for other ports
+    port: 465,
+    secure: true,
+    pool: true, // reuse connections
     auth: {
         user: EMAIL_USER,
         pass: EMAIL_PASS
     },
     tls: {
-        rejectUnauthorized: false
+        rejectUnauthorized: false,
+        minVersion: 'TLSv1.2'
     }
 });
 
