@@ -19,7 +19,7 @@ const BREVO_PASS = process.env.BREVO_PASS;
 
 // Brevo API Configuration
 const BREVO_KEY = process.env.BREVO_PASS;
-const SENDER_EMAIL = 'alimran9763@gmail.com'; 
+const SENDER_EMAIL = process.env.SENDER_EMAIL || 'alimran9763@gmail.com'; 
 
 async function sendEmail({ to, subject, html }) {
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
