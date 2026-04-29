@@ -287,7 +287,8 @@ app.post('/api/process-csv', (req, res) => {
     }
 });
 
-app.get('(.*)', (req, res) => {
+// Fallback for React Router - must be the last route
+app.use((req, res) => {
     res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
 });
 
