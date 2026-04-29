@@ -120,7 +120,8 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         }
 
         const token = Buffer.from(email + ':' + Date.now()).toString('base64');
-        const resetLink = 'http://localhost:5173/reset?token=' + token;
+        const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+        const resetLink = `${frontendUrl}/reset?token=${token}`;
 
         const emailBody = `
             <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; border: 1px solid #e0d4f7; border-radius: 10px; overflow: hidden;">
