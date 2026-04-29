@@ -3,7 +3,7 @@ import cors from 'cors';
 import { execFile } from 'child_process';
 import fs from 'fs';
 import path from 'path';
-import nodemailer from 'nodemailer';
+import { Resend } from 'resend';
 
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
@@ -13,33 +13,10 @@ app.use(express.json());
 // Serve React frontend in production
 app.use(express.static(path.join(process.cwd(), 'dist')));
 
-// put your gmail and app password here
-// go to myaccount.google.com > security > app passwords to get it
-const EMAIL_USER = 'edunotify29@gmail.com';
-const EMAIL_PASS = 'zdvkvtmdrlbcgbbm';
+// Resend API Configuration
+const resend = new Resend('re_P5XqT77j_EE9m2Sf5B33GhZMw1qjaX4FJ');
+const FROM_EMAIL = 'onboarding@resend.dev'; // Default for testing
 
-const mailer = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
-    pool: true, // reuse connections
-    auth: {
-        user: EMAIL_USER,
-        pass: EMAIL_PASS
-    },
-    tls: {
-        rejectUnauthorized: false,
-        minVersion: 'TLSv1.2'
-    }
-});
-
-mailer.verify((err) => {
-    if (err) {
-        console.log('Email not connected:', err.message);
-    } else {
-        console.log('Email is ready to send');
-    }
-});
 
 const DB_FILE = path.join(process.cwd(), 'staff_db.json');
 
@@ -134,15 +111,17 @@ app.post('/api/auth/forgot-password', async (req, res) => {
             </div>
         `;
 
-        const info = await mailer.sendMail({
-            from: '"EduNotify" <' + EMAIL_USER + '>',
+        const { data, error } = await resend.emails.send({
+            from: 'EduNotify <onboarding@resend.dev>',
             to: email,
             subject: 'EduNotify - Password Reset',
             html: emailBody
         });
 
-        console.log('Reset email sent:', info.messageId);
-        res.json({ message: 'Password reset email sent!', id: info.messageId });
+        if (error) throw error;
+
+        console.log('Reset email sent:', data.id);
+        res.json({ message: 'Password reset email sent!', id: data.id });
     } catch (err) {
         console.error('Forgot password error:', err);
         res.status(500).json({ error: 'Email failed', details: err.message });
@@ -219,15 +198,17 @@ app.post('/api/send-notification-email', async (req, res) => {
             </html>
         `;
 
-        const info = await mailer.sendMail({
-            from: '"EduNotify School" <' + EMAIL_USER + '>',
+        const { data, error } = await resend.emails.send({
+            from: 'EduNotify <onboarding@resend.dev>',
             to: to,
             subject: 'Performance Report - ' + studentName,
             html: emailBody
         });
 
-        console.log('Notification sent:', info.messageId);
-        res.json({ success: true, id: info.messageId });
+        if (error) throw error;
+
+        console.log('Notification sent:', data.id);
+        res.json({ success: true, id: data.id });
     } catch (err) {
         console.error('Email send error:', err);
         res.status(500).json({ error: 'Email system error', details: err.message });
