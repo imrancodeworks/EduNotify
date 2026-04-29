@@ -517,8 +517,8 @@ export default function App() {
                   <div className="generating-card">
                     <span className="spinner-blue" />
                     <div>
-                      <div className="generating-title">Generating messages... {genProgress} of {students.length}</div>
-                      <div className="generating-desc">AI is crafting personalized messages for each student</div>
+                      <div className="generating-title">Processing student reports... {genProgress} of {students.length}</div>
+                      <div className="generating-desc">Creating personalized report summaries for each student</div>
                     </div>
                     <div className="generating-progress-container">
                       <div className="generating-bar-bg">
