@@ -159,9 +159,9 @@ export default function App() {
   };
 
   const processWithCpp = async (csvText, autoGenerate = false) => {
-    let dataToUse = [];
-    // Clear existing data before processing new file to prevent duplicates
-    setStudents([]);
+    // Clear notifications when new data comes in
+    setNotifications([]);
+    
     try {
       const response = await fetch(`${API_BASE}/api/process-csv`, {
         method: "POST",
@@ -170,15 +170,30 @@ export default function App() {
       });
       if (!response.ok) throw new Error("C++ Server Offline");
       const data = await response.json();
-      setStudents(data);
-      dataToUse = data;
+      
+      // SANITIZATION & DEDUPLICATION LOGIC
+      const sanitized = data.map(s => {
+        const avg = parseFloat(s.avg);
+        const grade = avg >= 85 ? "Distinction" : avg >= 70 ? "Good" : avg >= 50 ? "Average" : "Poor";
+        const gradeColor = avg >= 85 ? "#B153D7" : avg >= 70 ? "#F9B2D7" : avg >= 50 ? "#FFB399" : "#607274";
+        const gradeBg = avg >= 85 ? "rgba(177, 83, 215, 0.15)" : avg >= 70 ? "rgba(249, 178, 215, 0.3)" : avg >= 50 ? "rgba(255, 179, 153, 0.3)" : "rgba(96, 114, 116, 0.15)";
+        return { ...s, grade, gradeColor, gradeBg };
+      });
+
+      // Remove duplicates by name
+      const uniqueData = Array.from(new Map(sanitized.map(s => [s.name, s])).values());
+      setStudents(uniqueData);
+      
+      if (autoGenerate && uniqueData.length > 0) generateNotifications(uniqueData);
     } catch (err) {
       try { 
-        dataToUse = parseCSV(csvText);
-        setStudents(dataToUse); 
+        const data = parseCSV(csvText);
+        // Deduplicate local data too
+        const uniqueData = Array.from(new Map(data.map(s => [s.name, s])).values());
+        setStudents(uniqueData); 
+        if (autoGenerate && uniqueData.length > 0) generateNotifications(uniqueData);
       } catch {}
     }
-    if (autoGenerate && dataToUse.length > 0) generateNotifications(dataToUse);
   };
 
   const handleCSV = (e) => {
