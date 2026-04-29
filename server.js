@@ -17,18 +17,33 @@ app.use(express.static(path.join(process.cwd(), 'dist')));
 const BREVO_USER = process.env.BREVO_USER || 'alimran9763@gmail.com'; 
 const BREVO_PASS = process.env.BREVO_PASS;
 
-const mailer = nodemailer.createTransport({
-    host: 'smtp-relay.brevo.com',
-    port: 465,
-    secure: true, // Use SSL for port 465
-    auth: {
-        user: BREVO_USER,
-        pass: BREVO_PASS
-    },
-    connectionTimeout: 10000, // 10 seconds
-    greetingTimeout: 10000,
-    socketTimeout: 15000
-});
+// Brevo API Configuration
+const BREVO_KEY = process.env.BREVO_PASS;
+const SENDER_EMAIL = 'alimran9763@gmail.com'; 
+
+async function sendEmail({ to, subject, html }) {
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+        method: 'POST',
+        headers: {
+            'accept': 'application/json',
+            'api-key': BREVO_KEY,
+            'content-type': 'application/json'
+        },
+        body: JSON.stringify({
+            sender: { name: "EduNotify", email: SENDER_EMAIL },
+            to: [{ email: to }],
+            subject: subject,
+            htmlContent: html
+        })
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.message || 'Brevo API Error');
+    }
+    return data;
+}
+
 
 
 const DB_FILE = path.join(process.cwd(), 'staff_db.json');
@@ -124,15 +139,14 @@ app.post('/api/auth/forgot-password', async (req, res) => {
             </div>
         `;
 
-        const info = await mailer.sendMail({
-            from: '"EduNotify" <alimran9763@gmail.com>',
+        const data = await sendEmail({
             to: email,
             subject: 'EduNotify - Password Reset',
             html: emailBody
         });
 
-        console.log('Reset email sent:', info.messageId);
-        res.json({ message: 'Password reset email sent!', id: info.messageId });
+        console.log('Reset email sent:', data.messageId);
+        res.json({ message: 'Password reset email sent!', id: data.messageId });
     } catch (err) {
         console.error('Forgot password error:', err);
         res.status(500).json({ error: 'Email failed', details: err.message });
@@ -209,15 +223,14 @@ app.post('/api/send-notification-email', async (req, res) => {
             </html>
         `;
 
-        const info = await mailer.sendMail({
-            from: '"EduNotify School" <alimran9763@gmail.com>',
+        const data = await sendEmail({
             to: to,
             subject: 'Performance Report - ' + studentName,
             html: emailBody
         });
 
-        console.log('Notification sent:', info.messageId);
-        res.json({ success: true, id: info.messageId });
+        console.log('Notification sent:', data.messageId);
+        res.json({ success: true, id: data.messageId });
     } catch (err) {
         console.error('Email send error:', err);
         res.status(500).json({ error: 'Email system error', details: err.message });
