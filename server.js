@@ -16,7 +16,7 @@ app.use(express.static(path.join(process.cwd(), 'dist')));
 // put your gmail and app password here
 // go to myaccount.google.com > security > app passwords to get it
 const EMAIL_USER = 'edunotify29@gmail.com';
-const EMAIL_PASS = 'zdvk vtmd rlbc gbbm';
+const EMAIL_PASS = 'zdvkvtmdrlbcgbbm';
 
 const mailer = nodemailer.createTransport({
     service: 'gmail',
