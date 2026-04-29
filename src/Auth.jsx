@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import './Auth.css';
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
@@ -8,8 +8,19 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{8,}$/;
 
 export default function Auth({ onLogin }) {
-  const [view, setView] = useState('login'); // 'login', 'signup', 'forgot'
+  const [view, setView] = useState('login'); // 'login', 'signup', 'forgot', 'reset'
   const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [token, setToken] = useState(null);
+
+  // Check for reset token on load
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const resetToken = params.get('token');
+    if (resetToken) {
+      setToken(resetToken);
+      setView('reset');
+    }
+  }, []);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
@@ -96,6 +107,21 @@ export default function Auth({ onLogin }) {
           setError(data.error || 'Could not send reset email. Check server configuration.');
         }
       }
+      else if (view === 'reset') {
+        const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, newPassword: formData.password })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          setSuccess('✅ Password successfully updated! Redirecting to login...');
+          // clear url params
+          window.history.replaceState({}, document.title, window.location.pathname);
+          setTimeout(() => setView('login'), 3000);
+        } else {
+          setError(data.error || 'Failed to reset password. Link may be expired.');
+        }
+      }
     } catch (err) {
       setError("Could not connect to authentication server.");
     } finally {
@@ -108,13 +134,16 @@ export default function Auth({ onLogin }) {
       <div className="auth-card">
         
         <div className="auth-header">
-          <div className="auth-logo">🔒</div>
+          <div className="auth-logo">{view === 'reset' ? '🔄' : '🔒'}</div>
           <h1 className="auth-title">
-            {view === 'login' ? 'Welcome Back' : view === 'signup' ? 'Create Account' : 'Reset Password'}
+            {view === 'login' ? 'Welcome Back' : 
+             view === 'signup' ? 'Create Account' : 
+             view === 'reset' ? 'New Password' : 'Reset Password'}
           </h1>
           <p className="auth-subtitle">
             {view === 'login' ? 'Enter your credentials to access the dashboard' : 
              view === 'signup' ? 'Join the staff notification portal' : 
+             view === 'reset' ? 'Create a strong new password for your account' :
              'Enter your registered email to receive a reset link'}
           </p>
         </div>
@@ -140,19 +169,21 @@ export default function Auth({ onLogin }) {
           )}
 
           <div className="input-group">
-            <label className="input-label">Email Address</label>
+            <label className="input-label">
+              {view === 'reset' ? 'New Password' : 'Email Address'}
+            </label>
             <input 
-              type="email" 
-              name="email"
-              className={`auth-input ${!validation.email ? 'invalid' : ''}`} 
-              placeholder="staff@edunotify.com"
-              value={formData.email}
+              type={view === 'reset' ? 'password' : 'email'} 
+              name={view === 'reset' ? 'password' : 'email'}
+              className={`auth-input ${(!validation.email && view !== 'reset') || (!validation.password && view === 'reset') ? 'invalid' : ''}`} 
+              placeholder={view === 'reset' ? '••••••••' : 'staff@edunotify.com'}
+              value={view === 'reset' ? formData.password : formData.email}
               onChange={handleChange}
               required 
             />
           </div>
 
-          {view !== 'forgot' && (
+          {(view !== 'forgot' && view !== 'reset') && (
             <div className="input-group">
               <label className="input-label">Password</label>
               <input 
@@ -179,6 +210,7 @@ export default function Auth({ onLogin }) {
             {loading ? <span className="spinner"></span> : 
              view === 'login' ? 'Sign In' : 
              view === 'signup' ? 'Sign Up' : 
+             view === 'reset' ? 'Update Password' :
              'Send Reset Link'}
           </button>
 
