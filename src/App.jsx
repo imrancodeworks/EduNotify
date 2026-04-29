@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import "./App.css";
 import Auth from "./Auth";
+import EngineeringBackground from "./EngineeringBackground";
 
 const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
 
@@ -325,15 +326,21 @@ export default function App() {
   };
 
   if (!isAuthenticated) {
-    return <Auth onLogin={(email) => {
-      setCurrentUserEmail(email);
-      setIsAuthenticated(true);
-      fetchStaffDatabase(email);
-    }} />;
+    return (
+      <>
+        <EngineeringBackground />
+        <Auth onLogin={(email) => {
+          setCurrentUserEmail(email);
+          setIsAuthenticated(true);
+          fetchStaffDatabase(email);
+        }} />
+      </>
+    );
   }
 
   return (
     <div>
+      <EngineeringBackground />
       {/* Header */}
       <div className="header-bg">
         <div className="header-container">
