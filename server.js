@@ -30,7 +30,7 @@ async function sendEmail({ to, subject, html }) {
             'content-type': 'application/json'
         },
         body: JSON.stringify({
-            sender: { name: "EduNotify", email: SENDER_EMAIL },
+            sender: { name: "Ramco Institute of Technology", email: SENDER_EMAIL },
             to: [{ email: to }],
             subject: subject,
             htmlContent: html
@@ -126,7 +126,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         const emailBody = `
             <div style="font-family: Arial, sans-serif; max-width: 480px; margin: auto; border: 1px solid #e0d4f7; border-radius: 10px; overflow: hidden;">
                 <div style="background: linear-gradient(135deg, #B153D7, #FFB399); padding: 28px; text-align: center;">
-                    <h2 style="color: white; margin: 0;">EduNotify</h2>
+                    <h2 style="color: white; margin: 0;">Ramco Institute of Technology</h2>
                     <p style="color: rgba(255,255,255,0.8); margin: 6px 0 0; font-size: 14px;">Password Reset</p>
                 </div>
                 <div style="padding: 28px;">
@@ -221,7 +221,7 @@ app.post('/api/send-notification-email', async (req, res) => {
             <body>
                 <div class="email-container">
                     <div class="email-header">
-                        <h2 style="color: white; margin: 0;">EduNotify</h2>
+                        <h2 style="color: white; margin: 0;">Ramco Institute of Technology</h2>
                         <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 13px;">Student Performance Report</p>
                     </div>
                     <div class="email-body">
@@ -245,7 +245,7 @@ app.post('/api/send-notification-email', async (req, res) => {
                             </div>
                         </div>
 
-                        <p style="color: #bbb; font-size: 11px; text-align: center; margin-top: 24px;">Sent by EduNotify - School Management System</p>
+                        <p style="color: #bbb; font-size: 11px; text-align: center; margin-top: 24px;">Sent by EduNotify - Ramco Institute of Technology</p>
                     </div>
                 </div>
             </body>
