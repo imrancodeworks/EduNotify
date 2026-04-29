@@ -20,8 +20,8 @@ const EMAIL_PASS = 'zdvkvtmdrlbcgbbm';
 
 const mailer = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false, // true for 465, false for other ports
     auth: {
         user: EMAIL_USER,
         pass: EMAIL_PASS
