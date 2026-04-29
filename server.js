@@ -19,11 +19,15 @@ const BREVO_PASS = process.env.BREVO_PASS;
 
 const mailer = nodemailer.createTransport({
     host: 'smtp-relay.brevo.com',
-    port: 587,
+    port: 465,
+    secure: true, // Use SSL for port 465
     auth: {
         user: BREVO_USER,
         pass: BREVO_PASS
-    }
+    },
+    connectionTimeout: 10000, // 10 seconds
+    greetingTimeout: 10000,
+    socketTimeout: 15000
 });
 
 
