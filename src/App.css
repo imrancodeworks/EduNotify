@@ -479,3 +479,80 @@ body {
 }
 
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Top Performer ── */
+.top-performer { display: flex; align-items: center; gap: 16px; }
+.avatar-large {
+  width: 64px; height: 64px; border-radius: 18px; flex-shrink: 0;
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  color: #fff; font-weight: 900; font-size: 20px;
+  display: flex; align-items: center; justify-content: center;
+}
+.tp-name  { font-size: 20px; font-weight: 800; color: #1a1a1a; margin-bottom: 4px; }
+.tp-grade { font-size: 14px; font-weight: 700; color: var(--primary); margin-bottom: 4px; }
+.tp-marks { font-size: 13px; color: var(--slate); }
+
+/* ── Generate Card Text ── */
+.generate-title    { font-size: 22px; font-weight: 900; margin: 0 0 8px; color: #1a1a1a; }
+.generate-subtitle { font-size: 14px; color: var(--slate); margin: 0; max-width: 400px; }
+
+/* ── Grade Distribution Row ── */
+.dist-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 36px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.dist-label { font-size: 13px; font-weight: 600; color: var(--slate); }
+.dist-count { font-size: 14px; font-weight: 800; text-align: right; }
+.progress-bar-bg {
+  height: 8px; background: #f0f0f0; border-radius: 999px; overflow: hidden;
+}
+.progress-bar-fill {
+  height: 100%; border-radius: 999px;
+  transition: width 0.8s cubic-bezier(0.4,0,0.2,1);
+}
+
+/* ── Staff Cards ── */
+.staff-card {
+  background: white; padding: 20px; border-radius: 18px;
+  border: 1px solid rgba(194, 226, 250, 0.5); box-shadow: var(--card-shadow);
+  display: flex; align-items: center; gap: 16px; cursor: pointer;
+  transition: all 0.3s ease;
+}
+.staff-card:hover { border-color: var(--primary); transform: translateX(6px); }
+.staff-info-main { flex: 1; }
+.staff-name-h    { font-size: 17px; font-weight: 800; margin: 0 0 4px; color: #1a1a1a; }
+.staff-role-sub  { font-size: 13px; font-weight: 700; color: var(--primary); }
+
+/* ── Empty State ── */
+.empty-state { text-align: center; padding: 80px 20px; animation: fadeIn 0.8s ease; }
+.empty-icon     { font-size: 56px; margin-bottom: 16px; opacity: 0.6; }
+.empty-title    { font-size: 22px; font-weight: 800; margin: 0 0 10px; color: #1a1a1a; }
+.empty-subtitle { font-size: 15px; color: var(--slate); margin: 0 0 28px; }
+
+/* ── Modal overflow fix ── */
+.modal-content {
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-subjects-container { display: grid; gap: 14px; }
+.modal-name-container { flex: 1; }
+
+/* ── Notification badges ── */
+.noti-status-success { background: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
+.noti-status-failed  { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; }
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .header-container { padding: 0 16px; }
+  .main-container   { padding: 16px; }
+  .stats-grid       { grid-template-columns: repeat(2, 1fr); }
+  .dashboard-sections { grid-template-columns: 1fr; }
+  .generate-card    { flex-direction: column; gap: 20px; text-align: center; }
+  .student-list-grid { grid-template-columns: 1fr; }
+  .dist-row         { grid-template-columns: 120px 1fr 30px; }
+  .nav-tab          { padding: 8px 14px; font-size: 13px; }
+  .modal-content    { padding: 20px; }
+}

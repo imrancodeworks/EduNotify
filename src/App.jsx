@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import "./App.css";
 import Auth from "./Auth";
 import EngineeringBackground from "./EngineeringBackground";
@@ -185,6 +185,7 @@ export default function App() {
       setStudents(uniqueData);
       
       if (autoGenerate && uniqueData.length > 0) generateNotifications(uniqueData);
+
     } catch (err) {
       try { 
         const data = parseCSV(csvText);
@@ -192,6 +193,7 @@ export default function App() {
         const uniqueData = Array.from(new Map(data.map(s => [s.name, s])).values());
         setStudents(uniqueData); 
         if (autoGenerate && uniqueData.length > 0) generateNotifications(uniqueData);
+
       } catch {}
     }
   };
@@ -205,6 +207,8 @@ export default function App() {
       processWithCpp(ev.target.result, true);
     };
     reader.readAsText(file);
+    // Reset input so same file can be re-uploaded
+    e.target.value = '';
   };
 
   const stats = {
@@ -217,9 +221,8 @@ export default function App() {
     topStudent: students.length ? students.reduce((a, s) => s.avg > a.avg ? s : a) : null,
   };
 
-  const generateNotifications = async (customStudents = null) => {
-    // If no custom students provided, use the global students state
-    const targetStudents = (customStudents && customStudents.length > 0) ? customStudents : students;
+  // Must always receive students explicitly to avoid stale closure
+  const generateNotifications = async (targetStudents) => {
     
     if (!targetStudents || targetStudents.length === 0) {
       alert("No student data found. Please upload a CSV file first.");
@@ -284,14 +287,14 @@ export default function App() {
     }
   };
 
-  const filtered = students
+  const filtered = useMemo(() => students
     .filter(s => filterGrade === "All" || s.grade === filterGrade)
     .sort((a, b) => {
       if (sortBy === "avg_desc") return b.avg - a.avg;
       if (sortBy === "avg_asc") return a.avg - b.avg;
       if (sortBy === "name") return a.name.localeCompare(b.name);
       return 0;
-    });
+    }), [students, filterGrade, sortBy]);
 
   if (!isAuthenticated) {
     return (
@@ -404,8 +407,14 @@ export default function App() {
                 <h2 className="generate-title">Generate Parent Reports</h2>
                 <p className="generate-subtitle">Send automated performance summaries to all {stats.total} parents via Email & WhatsApp.</p>
               </div>
-              <button onClick={generating ? undefined : generateNotifications} disabled={generating} className="btn btn-primary generate-btn-active">
-                {generating ? <span className="spinner" /> : "✉️ Generate & Send All"}
+              <button
+                onClick={generating ? undefined : () => generateNotifications(students)}
+                disabled={generating || students.length === 0}
+                className="btn btn-primary generate-btn-active"
+              >
+                {generating
+                  ? <><span className="spinner" /> Sending {genProgress}/{students.length}...</>
+                  : `✉️ Generate & Send All (${students.length})`}
               </button>
             </div>
           </div>
