@@ -9,7 +9,7 @@ const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{8,}$/;
 
 export default function Auth({ onLogin }) {
   const [view, setView] = useState('login'); // 'login', 'signup', 'forgot', 'reset'
-  const [formData, setFormData] = useState({ name: '', email: '', password: '' });
+  const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [token, setToken] = useState(null);
 
   // Check for reset token on load
@@ -48,12 +48,21 @@ export default function Auth({ onLogin }) {
     setSuccess('');
 
     // check if valid before submit
-    if (!EMAIL_REGEX.test(formData.email)) {
+    if (view !== 'reset' && !EMAIL_REGEX.test(formData.email)) {
       setError("Please enter a valid email address.");
       return;
     }
 
-    if (view !== 'forgot' && !PASSWORD_REGEX.test(formData.password)) {
+    if (view === 'reset') {
+      if (formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match!");
+        return;
+      }
+      if (!PASSWORD_REGEX.test(formData.password)) {
+        setError("Password must be at least 8 chars, with 1 uppercase, 1 lowercase, 1 number, and 1 special character (!@#$&*).");
+        return;
+      }
+    } else if (view !== 'forgot' && !PASSWORD_REGEX.test(formData.password)) {
       setError("Password must be at least 8 chars, with 1 uppercase, 1 lowercase, 1 number, and 1 special character (!@#$&*).");
       return;
     }
@@ -192,6 +201,21 @@ export default function Auth({ onLogin }) {
                 className={`auth-input ${!validation.password ? 'invalid' : ''}`} 
                 placeholder="••••••••"
                 value={formData.password}
+                onChange={handleChange}
+                required 
+              />
+            </div>
+          )}
+
+          {view === 'reset' && (
+            <div className="input-group">
+              <label className="input-label">Confirm Password</label>
+              <input 
+                type="password" 
+                name="confirmPassword"
+                className={`auth-input ${formData.confirmPassword && formData.password !== formData.confirmPassword ? 'invalid' : ''}`} 
+                placeholder="••••••••"
+                value={formData.confirmPassword}
                 onChange={handleChange}
                 required 
               />
