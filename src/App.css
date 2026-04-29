@@ -224,6 +224,24 @@ body {
   margin-bottom: 24px;
 }
 
+.student-card {
+  background: white;
+  border-radius: 16px;
+  padding: 20px;
+  box-shadow: var(--card-shadow);
+  border: 1px solid rgba(194, 226, 250, 0.3);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  animation: slideUp 0.5s ease-out backwards;
+}
+
+.student-card:hover {
+  border-color: var(--primary);
+  transform: scale(1.02);
+}
+
 .section-card {
   background: #fff;
   border-radius: 14px;
