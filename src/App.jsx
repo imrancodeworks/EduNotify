@@ -2,6 +2,8 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import "./App.css";
 import Auth from "./Auth";
 
+const API_BASE = import.meta.env.VITE_API_URL || "";
+
 const DEFAULT_CSV = `Student Name,Parent Phone,Parent Email,DPCO,Tamil,English,BEEE,Maths,Physics,C++
 Shalika Aafrin,916381659763,shalikaaafrin1408@gmail.com,98,95,97,99,100,98,99
 Lalitha,919876543201,,85,88,82,79,91,84,88
@@ -145,7 +147,7 @@ export default function App() {
     setStaffProfile(profileToSave);
 
     try {
-      const response = await fetch("/api/staff", {
+      const response = await fetch(`${API_BASE}/api/staff`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(profileToSave)
@@ -171,7 +173,7 @@ export default function App() {
 
   const fetchStaffDatabase = async (emailToLoad) => {
     try {
-      const response = await fetch("/api/staff");
+      const response = await fetch(`${API_BASE}/api/staff`);
       if (response.ok) {
         const data = await response.json();
         setAllStaff(data);
@@ -197,7 +199,7 @@ export default function App() {
   const processWithCpp = async (csvText, autoGenerate = false) => {
     let dataToUse = [];
     try {
-      const response = await fetch("/api/process-csv", {
+      const response = await fetch(`${API_BASE}/api/process-csv`, {
         method: "POST",
         headers: { "Content-Type": "text/plain" },
         body: csvText
@@ -274,7 +276,7 @@ export default function App() {
       let emailSent = false;
       if (hasEmail) {
         try {
-          const emailRes = await fetch("/api/send-notification-email", {
+          const emailRes = await fetch(`${API_BASE}/api/send-notification-email`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({

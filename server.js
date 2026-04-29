@@ -6,7 +6,7 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 
 const app = express();
-app.use(cors());
+app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
 app.use(express.text());
 app.use(express.json());
 

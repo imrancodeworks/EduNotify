@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import './Auth.css';
 
+const API_BASE = import.meta.env.VITE_API_URL || "";
+
 // validation regex
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[!@#$&*])(?=.*[0-9])(?=.*[a-z]).{8,}$/;
@@ -54,7 +56,7 @@ export default function Auth({ onLogin }) {
 
     try {
       if (view === 'login') {
-        const res = await fetch('/api/auth/login', {
+        const res = await fetch(`${API_BASE}/api/auth/login`, {
           method: 'POST', headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ email: formData.email, password: formData.password })
         });
@@ -67,7 +69,7 @@ export default function Auth({ onLogin }) {
         }
       } 
       else if (view === 'signup') {
-        const res = await fetch('/api/auth/signup', {
+        const res = await fetch(`${API_BASE}/api/auth/signup`, {
           method: 'POST', headers: {'Content-Type': 'application/json'},
           body: JSON.stringify({ email: formData.email, password: formData.password, name: formData.name })
         });
@@ -82,7 +84,7 @@ export default function Auth({ onLogin }) {
         }
       } 
       else if (view === 'forgot') {
-        const res = await fetch('/api/auth/forgot-password', {
+        const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: formData.email })
         });
