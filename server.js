@@ -222,8 +222,8 @@ app.post('/api/send-notification-email', async (req, res) => {
         console.log('Notification sent to', to);
         res.json({ success: true });
     } catch (err) {
-        console.log('Email send error:', err.message);
-        res.status(500).json({ error: 'Failed to send email: ' + err.message });
+        console.error('Email send error:', err);
+        res.status(500).json({ error: 'Email system error', details: err.message });
     }
 });
 
@@ -270,8 +270,12 @@ app.post('/api/process-csv', (req, res) => {
             if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
 
             if (err) {
-                console.log('C++ error:', stderr || err.message);
-                return res.status(500).json({ error: 'C++ processor failed. Make sure processor.exe is compiled.' });
+                console.error('C++ execution error:', stderr || err.message);
+                return res.status(500).json({ 
+                    error: 'C++ processor failed', 
+                    details: stderr || err.message,
+                    command: exe
+                });
             }
 
             try {
