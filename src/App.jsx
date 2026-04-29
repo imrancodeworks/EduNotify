@@ -160,6 +160,8 @@ export default function App() {
 
   const processWithCpp = async (csvText, autoGenerate = false) => {
     let dataToUse = [];
+    // Clear existing data before processing new file to prevent duplicates
+    setStudents([]);
     try {
       const response = await fetch(`${API_BASE}/api/process-csv`, {
         method: "POST",
@@ -497,7 +499,19 @@ export default function App() {
               </div>
               <button onClick={() => setSelectedStudent(null)} className="modal-close">✕</button>
             </div>
-            <div className="profile-form">
+            <div className="modal-subjects-container">
+              <div className="section-card" style={{ marginBottom: "20px", background: "#f8fafc" }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "15px" }}>
+                  <div>
+                    <div className="stat-label">Parent Phone</div>
+                    <div className="tp-name" style={{ fontSize: "15px" }}>{selectedStudent.phone || "Not Provided"}</div>
+                  </div>
+                  <div>
+                    <div className="stat-label">Parent Email</div>
+                    <div className="tp-name" style={{ fontSize: "15px" }}>{selectedStudent.email || "Not Provided"}</div>
+                  </div>
+                </div>
+              </div>
               {selectedStudent.marks.map(m => (
                 <div key={m.subject} className="dist-row" style={{ gridTemplateColumns: "120px 1fr 40px" }}>
                   <div className="dist-label">{m.subject}</div>
