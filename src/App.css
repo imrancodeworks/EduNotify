@@ -543,6 +543,7 @@ body {
 /* ── Notification badges ── */
 .noti-status-success { background: #f0fff4; color: #38a169; border: 1px solid #c6f6d5; }
 .noti-status-failed  { background: #fff5f5; color: #e53e3e; border: 1px solid #fed7d7; }
+.noti-no-contact     { border-left: 4px solid #e53e3e !important; }
 
 /* ── Responsive ── */
 @media (max-width: 768px) {

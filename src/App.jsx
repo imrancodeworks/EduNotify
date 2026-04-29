@@ -101,7 +101,7 @@ export default function App() {
   const [showProfile, setShowProfile] = useState(false);
   const [staffProfile, setStaffProfile] = useState({
     name: "Shalika Aafrin",
-    department: "Computer Science",
+    department: "Computer Science and Engineering",
     gender: "Female",
     role: "Class Advisor"
   });
@@ -171,13 +171,20 @@ export default function App() {
       if (!response.ok) throw new Error("C++ Server Offline");
       const data = await response.json();
       
-      // SANITIZATION & DEDUPLICATION LOGIC
+      // SANITIZATION & DEDUPLICATION: re-validate phone/email from C++ output
       const sanitized = data.map(s => {
         const avg = parseFloat(s.avg);
         const grade = avg >= 85 ? "Distinction" : avg >= 70 ? "Good" : avg >= 50 ? "Average" : "Poor";
         const gradeColor = avg >= 85 ? "#B153D7" : avg >= 70 ? "#F9B2D7" : avg >= 50 ? "#FFB399" : "#607274";
-        const gradeBg = avg >= 85 ? "rgba(177, 83, 215, 0.15)" : avg >= 70 ? "rgba(249, 178, 215, 0.3)" : avg >= 50 ? "rgba(255, 179, 153, 0.3)" : "rgba(96, 114, 116, 0.15)";
-        return { ...s, grade, gradeColor, gradeBg };
+        const gradeBg   = avg >= 85 ? "rgba(177,83,215,0.15)" : avg >= 70 ? "rgba(249,178,215,0.3)" : avg >= 50 ? "rgba(255,179,153,0.3)" : "rgba(96,114,116,0.15)";
+        // Strict phone: must have 7+ digits (strip non-digits to count)
+        const rawPhone = s.phone || "";
+        const digitCount = (rawPhone.replace(/\D/g, "")||'').length;
+        const phone = digitCount >= 7 ? rawPhone : "";
+        // Strict email
+        const rawEmail = s.email || "";
+        const email = rawEmail.includes("@") && rawEmail.includes(".") ? rawEmail : "";
+        return { ...s, phone, email, grade, gradeColor, gradeBg };
       });
 
       // Remove duplicates by name
@@ -252,7 +259,17 @@ export default function App() {
 
         await new Promise(resolve => setTimeout(resolve, 100)); // Faster generation
         
-        const hasEmail = s.email && s.email.includes('@');
+        const hasEmail = s.email && s.email.includes('@') && s.email.includes('.');
+        const hasPhone = s.phone && (s.phone.replace(/\D/g,'').length >= 7);
+
+        // Skip if no contact info — flag with warning
+        if (!hasEmail && !hasPhone) {
+          results.push({ ...s, message: msg, emailSent: false, hasPhone: false, hasEmail: false, noContact: true });
+          setGenProgress(i + 1);
+          setNotifications([...results]);
+          continue;
+        }
+
         let emailSent = false;
         if (hasEmail) {
           try {
@@ -275,7 +292,7 @@ export default function App() {
           }
         }
         
-        results.push({ ...s, message: msg, emailSent, hasPhone: s.phone && s.phone.length >= 6, hasEmail });
+        results.push({ ...s, message: msg, emailSent, hasPhone, hasEmail, noContact: false });
         setGenProgress(i + 1);
         setNotifications([...results]);
       }
@@ -472,31 +489,60 @@ export default function App() {
                 <button onClick={() => setView("dashboard")} className="btn btn-primary">Back to Dashboard</button>
               </div>
             ) : (
-              <div className="noti-grid" style={{ display: "grid", gap: "20px" }}>
+            <div className="noti-grid" style={{ display: "grid", gap: "20px" }}>
                 {notifications.map((n, i) => (
-                  <div key={i} className="section-card">
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
+                  <div key={i} className={`section-card ${n.noContact ? 'noti-no-contact' : ''}`}>
+                    {/* Card header row */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "16px", flexWrap: "wrap", gap: "10px" }}>
                       <div style={{ display: "flex", gap: "12px", alignItems: "center" }}>
-                        <div className="avatar" style={{ background: n.gradeBg }}>{n.name[0]}</div>
+                        <div className="avatar" style={{ background: n.gradeBg, color: n.gradeColor, fontWeight: 800 }}>{n.name[0]}</div>
                         <div>
                           <div className="student-name">{n.name}</div>
-                          <div style={{ fontSize: "12px", color: "#607274" }}>{n.hasEmail ? n.email : "No Email"}</div>
+                          <div style={{ fontSize: "12px", color: "#607274", marginTop: "2px" }}>
+                            {n.hasPhone ? `📱 ${n.phone}` : ''}
+                            {n.hasPhone && n.hasEmail ? '  ·  ' : ''}
+                            {n.hasEmail ? `✉️ ${n.email}` : ''}
+                            {n.noContact ? '⚠️ No phone or email provided' : ''}
+                          </div>
                         </div>
                       </div>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <span className={`grade-badge ${n.emailSent ? "noti-status-success" : "noti-status-failed"}`}>
-                          {n.emailSent ? "Email Sent ✓" : "Email Failed ⚠"}
-                        </span>
-                        {n.hasPhone && (
-                          <a href={`https://wa.me/${n.phone}?text=${encodeURIComponent(n.message)}`} target="_blank" rel="noreferrer" className="btn btn-primary" style={{ padding: "6px 12px", fontSize: "12px" }}>
-                            WhatsApp
-                          </a>
+                      {/* Status badges + action */}
+                      <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
+                        {n.noContact ? (
+                          <span className="grade-badge noti-status-failed">⚠ No Contact Info</span>
+                        ) : (
+                          <>
+                            {n.hasEmail && (
+                              <span className={`grade-badge ${n.emailSent ? 'noti-status-success' : 'noti-status-failed'}`}>
+                                {n.emailSent ? '✉ Email Sent' : '✉ Email Failed'}
+                              </span>
+                            )}
+                            {n.hasPhone && (
+                              <a
+                                href={`https://wa.me/${n.phone.replace(/\D/g,'')}?text=${encodeURIComponent(n.message)}`}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="btn btn-primary"
+                                style={{ padding: "6px 14px", fontSize: "12px", textDecoration: "none" }}
+                              >
+                                💬 Send WhatsApp
+                              </a>
+                            )}
+                          </>
                         )}
                       </div>
                     </div>
-                    <div className="marks-preview" style={{ borderLeft: `4px solid ${n.gradeColor}`, paddingLeft: "15px" }}>
-                      {n.message}
-                    </div>
+                    {/* Message preview */}
+                    {!n.noContact && (
+                      <div className="marks-preview" style={{ borderLeft: `4px solid ${n.gradeColor}`, paddingLeft: "14px", whiteSpace: "pre-line" }}>
+                        {n.message}
+                      </div>
+                    )}
+                    {n.noContact && (
+                      <div className="marks-preview" style={{ borderLeft: "4px solid #e53e3e", paddingLeft: "14px", color: "#e53e3e" }}>
+                        Please add a phone number or email for {n.name} in the CSV file and regenerate.
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
@@ -656,11 +702,15 @@ export default function App() {
               </div>
               <button onClick={() => setSelectedStaff(null)} className="modal-close">✕</button>
             </div>
-            <div className="section-card" style={{ marginTop: "20px" }}>
-              <div className="stat-label">Department</div>
-              <div className="tp-name" style={{ marginBottom: "15px" }}>{selectedStaff.department}</div>
-              <div className="stat-label">Gender</div>
-              <div className="tp-name">{selectedStaff.gender}</div>
+            <div className="section-card" style={{ marginTop: "20px", display: "grid", gap: "12px" }}>
+              <div>
+                <div className="stat-label">Department</div>
+                <div className="tp-name">{selectedStaff.department || <span style={{color:'#ccc'}}>Not set</span>}</div>
+              </div>
+              <div>
+                <div className="stat-label">Gender</div>
+                <div className="tp-name">{selectedStaff.gender || "Not set"}</div>
+              </div>
             </div>
           </div>
         </div>
