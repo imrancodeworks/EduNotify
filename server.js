@@ -132,18 +132,18 @@ app.post('/api/auth/forgot-password', async (req, res) => {
             </div>
         `;
 
-        await mailer.sendMail({
+        const info = await mailer.sendMail({
             from: '"EduNotify" <' + EMAIL_USER + '>',
             to: email,
             subject: 'EduNotify - Password Reset',
             html: emailBody
         });
 
-        console.log('Reset email sent to', email);
-        res.json({ message: 'Password reset email sent!' });
+        console.log('Reset email sent:', info.messageId);
+        res.json({ message: 'Password reset email sent!', id: info.messageId });
     } catch (err) {
-        console.log('Forgot password error:', err.message);
-        res.status(500).json({ error: 'Could not send reset email. Check your email settings in server.js' });
+        console.error('Forgot password error:', err);
+        res.status(500).json({ error: 'Email failed', details: err.message });
     }
 });
 
@@ -217,15 +217,15 @@ app.post('/api/send-notification-email', async (req, res) => {
             </html>
         `;
 
-        await mailer.sendMail({
+        const info = await mailer.sendMail({
             from: '"EduNotify School" <' + EMAIL_USER + '>',
             to: to,
             subject: 'Performance Report - ' + studentName,
             html: emailBody
         });
 
-        console.log('Notification sent to', to);
-        res.json({ success: true });
+        console.log('Notification sent:', info.messageId);
+        res.json({ success: true, id: info.messageId });
     } catch (err) {
         console.error('Email send error:', err);
         res.status(500).json({ error: 'Email system error', details: err.message });
