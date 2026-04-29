@@ -203,53 +203,70 @@ export default function App() {
   };
 
   const generateNotifications = async (customStudents = null) => {
-    const targetStudents = customStudents || students;
+    // If no custom students provided, use the global students state
+    const targetStudents = (customStudents && customStudents.length > 0) ? customStudents : students;
+    
+    if (!targetStudents || targetStudents.length === 0) {
+      alert("No student data found. Please upload a CSV file first.");
+      return;
+    }
+
     setGenerating(true);
     setGenProgress(0);
     setNotifications([]);
     const results = [];
-    for (let i = 0; i < targetStudents.length; i++) {
-      const s = targetStudents[i];
-      let msg = "";
-      if (s.grade === "Distinction") {
-        msg = `Dear Parent,\nWe are thrilled to inform you that ${s.name} has performed exceptionally well, achieving ${s.avg}% (Distinction) with ${s.total}/${s.max} marks. Keep up the excellent work!\n- Ramco Institute of Technology`;
-      } else if (s.grade === "Good") {
-        msg = `Dear Parent,\n${s.name} has secured a solid score of ${s.avg}% (${s.total}/${s.max} marks). This is a good performance, and with a little more focus, we are sure they can achieve even higher.\n- Ramco Institute of Technology`;
-      } else if (s.grade === "Average") {
-        const weakSubjects = s.marks.filter(m => m.mark < 70).map(m => m.subject).join(", ");
-        msg = `Dear Parent,\n${s.name} has scored ${s.avg}% overall. While this is an average performance, we recommend giving extra attention to ${weakSubjects || "their studies"} to improve future results.\n- Ramco Institute of Technology`;
-      } else {
-        const weakSubjects = s.marks.filter(m => m.mark < 60).map(m => m.subject).join(", ");
-        msg = `Dear Parent,\nThis is to inform you that ${s.name} has scored ${s.avg}% which is below our expectations. We strongly advise focusing on ${weakSubjects || "all subjects"} and would like to discuss their progress with you soon.\n- Ramco Institute of Technology`;
-      }
+    
+    try {
+      for (let i = 0; i < targetStudents.length; i++) {
+        const s = targetStudents[i];
+        let msg = "";
+        if (s.grade === "Distinction") {
+          msg = `Dear Parent,\nWe are thrilled to inform you that ${s.name} has performed exceptionally well, achieving ${s.avg}% (Distinction) with ${s.total}/${s.max} marks. Keep up the excellent work!\n- Ramco Institute of Technology`;
+        } else if (s.grade === "Good") {
+          msg = `Dear Parent,\n${s.name} has secured a solid score of ${s.avg}% (${s.total}/${s.max} marks). This is a good performance, and with a little more focus, we are sure they can achieve even higher.\n- Ramco Institute of Technology`;
+        } else if (s.grade === "Average") {
+          const weakSubjects = s.marks.filter(m => m.mark < 70).map(m => m.subject).join(", ");
+          msg = `Dear Parent,\n${s.name} has scored ${s.avg}% overall. While this is an average performance, we recommend giving extra attention to ${weakSubjects || "their studies"} to improve future results.\n- Ramco Institute of Technology`;
+        } else {
+          const weakSubjects = s.marks.filter(m => m.mark < 60).map(m => m.subject).join(", ");
+          msg = `Dear Parent,\nThis is to inform you that ${s.name} has scored ${s.avg}% which is below our expectations. We strongly advise focusing on ${weakSubjects || "all subjects"} and would like to discuss their progress with you soon.\n- Ramco Institute of Technology`;
+        }
 
-      await new Promise(resolve => setTimeout(resolve, 150));
-      const hasEmail = s.email && s.email.includes('@');
-      let emailSent = false;
-      if (hasEmail) {
-        try {
-          const emailRes = await fetch(`${API_BASE}/api/send-notification-email`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              to: s.email,
-              studentName: s.name,
-              message: msg,
-              avg: s.avg,
-              grade: s.grade,
-              total: s.total,
-              maxMarks: s.max
-            })
-          });
-          emailSent = emailRes.ok;
-        } catch (err) {}
+        await new Promise(resolve => setTimeout(resolve, 100)); // Faster generation
+        
+        const hasEmail = s.email && s.email.includes('@');
+        let emailSent = false;
+        if (hasEmail) {
+          try {
+            const emailRes = await fetch(`${API_BASE}/api/send-notification-email`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                to: s.email,
+                studentName: s.name,
+                message: msg,
+                avg: s.avg,
+                grade: s.grade,
+                total: s.total,
+                maxMarks: s.max
+              })
+            });
+            emailSent = emailRes.ok;
+          } catch (err) {
+            console.error("Email failed for:", s.name);
+          }
+        }
+        
+        results.push({ ...s, message: msg, emailSent, hasPhone: s.phone && s.phone.length >= 6, hasEmail });
+        setGenProgress(i + 1);
+        setNotifications([...results]);
       }
-      results.push({ ...s, message: msg, emailSent, hasPhone: s.phone && s.phone.length >= 6, hasEmail });
-      setGenProgress(i + 1);
-      setNotifications([...results]);
+    } catch (error) {
+      console.error("Error during generation:", error);
+    } finally {
+      setGenerating(false);
+      setView("notifications");
     }
-    setGenerating(false);
-    setView("notifications");
   };
 
   const filtered = students
