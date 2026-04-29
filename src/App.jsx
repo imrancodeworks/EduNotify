@@ -2,7 +2,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import "./App.css";
 import Auth from "./Auth";
 
-const API_BASE = import.meta.env.VITE_API_URL || "";
+const API_BASE = import.meta.env.VITE_API_URL || (import.meta.env.DEV ? 'http://localhost:3000' : '');
 
 const DEFAULT_CSV = `Student Name,Parent Phone,Parent Email,DPCO,Tamil,English,BEEE,Maths,Physics,C++
 Shalika Aafrin,916381659763,shalikaaafrin1408@gmail.com,98,95,97,99,100,98,99
