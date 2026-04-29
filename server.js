@@ -154,6 +154,34 @@ app.post('/api/auth/forgot-password', async (req, res) => {
     }
 });
 
+// Final step: Reset the password with token
+app.post('/api/auth/reset-password', (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+        if (!token || !newPassword) return res.status(400).json({ error: 'Missing data' });
+
+        // Decode token (email:timestamp)
+        const decoded = Buffer.from(token, 'base64').toString('utf8');
+        const [email] = decoded.split(':');
+
+        const staff = readDB();
+        const userIndex = staff.findIndex(s => s.id === email);
+
+        if (userIndex === -1) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Update password
+        staff[userIndex].password = newPassword;
+        saveDB(staff);
+
+        res.json({ message: 'Password updated successfully' });
+    } catch (err) {
+        console.error('Reset error:', err);
+        res.status(500).json({ error: 'Could not reset password' });
+    }
+});
+
 // send parent notification email
 app.post('/api/send-notification-email', async (req, res) => {
     try {
