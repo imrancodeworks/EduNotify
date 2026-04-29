@@ -543,9 +543,46 @@ export default function App() {
               </div>
               <div className="profile-input-group">
                 <label>Staff Role</label>
-                <input type="text" value={staffProfile.role} onChange={e => setStaffProfile({...staffProfile, role: e.target.value})} required />
+                <select value={staffProfile.role} onChange={e => setStaffProfile({...staffProfile, role: e.target.value})} required>
+                  <option value="" disabled>Select Role</option>
+                  <option value="HOD">HOD</option>
+                  <option value="Assistant Professor">Assistant Professor</option>
+                  <option value="Mentor">Mentor</option>
+                  <option value="Student Advisor">Student Advisor</option>
+                </select>
+              </div>
+              <div className="profile-input-group">
+                <label>Gender</label>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  {["Male", "Female"].map(g => (
+                    <button 
+                      key={g} 
+                      type="button" 
+                      onClick={() => setStaffProfile({...staffProfile, gender: g})}
+                      className={`btn ${staffProfile.gender === g ? "btn-primary" : "btn-outline"}`}
+                      style={{ flex: 1, padding: "10px" }}
+                    >
+                      {g}
+                    </button>
+                  ))}
+                </div>
               </div>
               <button type="submit" className="profile-save-btn">Update Profile</button>
+              
+              <div style={{ borderTop: "1px solid #f0f0f0", marginTop: "10px", paddingTop: "20px" }}>
+                <button 
+                  type="button" 
+                  className="btn btn-outline" 
+                  style={{ width: "100%", color: "#e53e3e", borderColor: "#fed7d7" }}
+                  onClick={() => {
+                    setIsAuthenticated(false);
+                    setCurrentUserEmail("");
+                    setShowProfile(false);
+                  }}
+                >
+                  Logout / Sign Out
+                </button>
+              </div>
             </form>
           </div>
         </div>
