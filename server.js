@@ -287,7 +287,7 @@ app.post('/api/process-csv', (req, res) => {
     }
 });
 
-app.get('*', (req, res) => {
+app.get('(.*)', (req, res) => {
     res.sendFile(path.join(process.cwd(), 'dist', 'index.html'));
 });
 
