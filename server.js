@@ -19,10 +19,15 @@ const EMAIL_USER = 'edunotify29@gmail.com';
 const EMAIL_PASS = 'zdvkvtmdrlbcgbbm';
 
 const mailer = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: EMAIL_USER,
         pass: EMAIL_PASS
+    },
+    tls: {
+        rejectUnauthorized: false
     }
 });
 
