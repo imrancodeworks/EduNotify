@@ -13,15 +13,21 @@ app.use(express.json());
 // Serve React frontend in production
 app.use(express.static(path.join(process.cwd(), 'dist')));
 
-// Brevo SMTP Configuration
-const BREVO_USER = process.env.BREVO_USER || 'alimran9763@gmail.com'; 
+// Brevo SMTP Configuration (for nodemailer — currently unused)
+const BREVO_USER = process.env.BREVO_USER || 'alimran9763@gmail.com';
 const BREVO_PASS = process.env.BREVO_PASS;
 
-// Brevo API Configuration
-const BREVO_KEY = process.env.BREVO_PASS;
-const SENDER_EMAIL = process.env.SENDER_EMAIL || 'edunotify29@gmail.com'; 
+// Brevo REST API Configuration
+// BREVO_KEY must be your Brevo API key (from Settings → API Keys in Brevo dashboard)
+// It is DIFFERENT from BREVO_PASS (the SMTP password)
+const BREVO_KEY = process.env.BREVO_KEY || process.env.BREVO_PASS; // fallback for backward compat
+const SENDER_EMAIL = process.env.SENDER_EMAIL || 'edunotify29@gmail.com';
 
 async function sendEmail({ to, subject, html }) {
+    if (!BREVO_KEY) {
+        throw new Error('BREVO_KEY environment variable is not set.');
+    }
+
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
         method: 'POST',
         headers: {
@@ -39,7 +45,8 @@ async function sendEmail({ to, subject, html }) {
 
     const data = await response.json();
     if (!response.ok) {
-        throw new Error(data.message || 'Brevo API Error');
+        console.error('Brevo API rejected the request:', JSON.stringify(data));
+        throw new Error(data.message || `Brevo API Error (HTTP ${response.status})`);
     }
     return data;
 }
@@ -258,10 +265,10 @@ app.post('/api/send-notification-email', async (req, res) => {
             html: emailBody
         });
 
-        console.log('Notification sent:', data.messageId);
+        console.log(`✅ Notification sent to ${to} | messageId: ${data.messageId}`);
         res.json({ success: true, id: data.messageId });
     } catch (err) {
-        console.error('Email send error:', err);
+        console.error(`❌ Email send FAILED to ${to}:`, err.message);
         res.status(500).json({ error: 'Email system error', details: err.message });
     }
 });
