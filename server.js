@@ -273,6 +273,39 @@ app.post('/api/send-notification-email', async (req, res) => {
     }
 });
 
+// ── Diagnostic: check env config (no secrets exposed) ──
+app.get('/api/debug-config', (req, res) => {
+    res.json({
+        BREVO_KEY_set:    !!process.env.BREVO_KEY,
+        BREVO_PASS_set:   !!process.env.BREVO_PASS,
+        SENDER_EMAIL:     SENDER_EMAIL,
+        FRONTEND_URL:     process.env.FRONTEND_URL || '(not set)',
+        BREVO_KEY_prefix: process.env.BREVO_KEY ? process.env.BREVO_KEY.slice(0, 8) + '...' : 'NOT SET',
+        node_version:     process.version,
+    });
+});
+
+// ── Diagnostic: send a real test email via Brevo ──
+app.post('/api/test-email', async (req, res) => {
+    const { to } = req.body;
+    if (!to) return res.status(400).json({ error: 'Provide { "to": "email@example.com" } in body' });
+    try {
+        const data = await sendEmail({
+            to,
+            subject: 'EduNotify — Test Email',
+            html: `<div style="font-family:Arial,sans-serif;padding:24px;max-width:480px">
+                     <h2 style="color:#B153D7">✅ EduNotify Email Test</h2>
+                     <p>If you received this, Brevo is correctly configured on your server.</p>
+                     <p style="color:#888;font-size:12px">Sent at: ${new Date().toISOString()}</p>
+                   </div>`
+        });
+        res.json({ success: true, messageId: data.messageId });
+    } catch (err) {
+        console.error('Test email FAILED:', err.message);
+        res.status(500).json({ error: err.message });
+    }
+});
+
 // get all staff
 app.get('/api/staff', (req, res) => {
     try {
