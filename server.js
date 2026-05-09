@@ -493,13 +493,11 @@ function initWhatsApp() {
 
     waClient = new Client({
         authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
-        webVersionCache: {
-            type: 'remote',
-            remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
-        },
+        webVersionCache: { type: 'none' },
         puppeteer: {
             executablePath: puppeteer.executablePath(),
             headless: true,
+            timeout: 60000,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
@@ -523,7 +521,21 @@ function initWhatsApp() {
         }
     });
 
+    // Timeout: if no QR appears within 90s, surface an error
+    const initTimeout = setTimeout(() => {
+        if (waStatus === 'loading') {
+            console.error('⏰ WhatsApp initialization timed out after 90s');
+            waStatus = 'error';
+            waErrorMsg = 'Connection timed out. Render free-tier may not have enough memory for WhatsApp. Try again or upgrade your plan.';
+            if (waClient) {
+                waClient.destroy().catch(() => {});
+                waClient = null;
+            }
+        }
+    }, 90000);
+
     waClient.on('qr', async (qr) => {
+        clearTimeout(initTimeout);
         waStatus = 'qr';
         waQrDataUrl = await qrcode.toDataURL(qr);
         console.log('📱 WhatsApp QR code ready — scan in the app.');
@@ -535,12 +547,14 @@ function initWhatsApp() {
     });
 
     waClient.on('authenticated', () => {
+        clearTimeout(initTimeout);
         waStatus = 'loading';
         waQrDataUrl = null;
         console.log('✅ WhatsApp authenticated.');
     });
 
     waClient.on('ready', () => {
+        clearTimeout(initTimeout);
         waStatus = 'ready';
         waQrDataUrl = null;
         console.log('✅ WhatsApp client is READY to send messages.');
@@ -554,6 +568,7 @@ function initWhatsApp() {
     });
 
     waClient.initialize().catch(err => {
+        clearTimeout(initTimeout);
         console.error('❌ WhatsApp initialization failed:', err);
         waStatus = 'error';
         waErrorMsg = err.message;

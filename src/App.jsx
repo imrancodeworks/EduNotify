@@ -484,7 +484,7 @@ export default function App() {
             </div>
             <div className="header-actions">
               <button onClick={() => fileRef.current.click()} className="btn btn-outline">
-                + Import CSV
+                📂 Import CSV
               </button>
               <input ref={fileRef} type="file" accept=".csv" onChange={handleCSV} style={{ display: "none" }} />
               <button className="profile-btn" onClick={() => setShowProfile(true)}>
@@ -624,7 +624,7 @@ export default function App() {
           <div className="view-fade">
             {notifications.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-icon">++</div>
+                <div className="empty-icon">📭</div>
                 <h3 className="empty-title">No Reports Generated</h3>
                 <p className="empty-subtitle">Click "Generate & Send" on the Dashboard to start.</p>
                 <button onClick={() => setView("dashboard")} className="btn btn-primary">Back to Dashboard</button>
@@ -636,7 +636,7 @@ export default function App() {
                 {(() => {
                   const waList = notifications.filter(n => n.hasPhone && !n.noContact);
                   const statusColor = waStatus === 'ready' ? '#22c55e' : waStatus === 'qr' ? '#f59e0b' : waStatus === 'error' ? '#ef4444' : '#94a3b8';
-                  const statusLabel = waStatus === 'ready' ? '+ Connected' : waStatus === 'qr' ? '+ Scan QR' : waStatus === 'loading' ? '+| Connecting+' : waStatus === 'error' ? '[X] Error' : '+ Disconnected';
+                  const statusLabel = waStatus === 'ready' ? '✅ Connected' : waStatus === 'qr' ? '📷 Scan QR' : waStatus === 'loading' ? '⏳ Connecting...' : waStatus === 'error' ? '❌ Error' : '⭕ Disconnected';
                   return (
                     <div style={{ gridColumn: "1 / -1", background: "rgba(177,83,215,0.07)", border: "1.5px solid rgba(177,83,215,0.25)", borderRadius: "14px", padding: "18px 22px", display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
                       {/* Status dot */}
@@ -650,12 +650,12 @@ export default function App() {
                       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                         {(waStatus === 'disconnected' || waStatus === 'error') && (
                           <button id="wa-connect-btn" className="btn btn-primary" style={{ padding: "8px 18px", fontSize: 13 }} onClick={connectWhatsApp}>
-                            + {waStatus === 'error' ? 'Retry Connection' : 'Connect WhatsApp'}
+                            📲 {waStatus === 'error' ? 'Retry Connection' : 'Connect WhatsApp'}
                           </button>
                         )}
                         {(waStatus === 'loading' || waStatus === 'qr' || waStatus === 'error') && (
                           <button id="wa-qr-btn" className="btn btn-outline" style={{ padding: "8px 18px", fontSize: 13 }} onClick={() => setShowQrModal(true)}>
-                            {waStatus === 'qr' ? '+ View QR Code' : '+| Waiting+'}
+                            {waStatus === 'qr' ? '📷 View QR Code' : '⏳ Waiting...'}
                           </button>
                         )}
                         {waStatus === 'ready' && waList.length > 0 && (
@@ -666,7 +666,7 @@ export default function App() {
                             disabled={waSending}
                             onClick={sendAllWhatsApp}
                           >
-                            {waSending ? <><span className="spinner" /> Sending+</> : `+ Send All WhatsApp (${waList.length})`}
+                            {waSending ? <><span className="spinner" /> Sending...</> : `📤 Send All WhatsApp (${waList.length})`}
                           </button>
                         )}
                         {waStatus === 'ready' && (
@@ -679,10 +679,10 @@ export default function App() {
                       {/* Results summary */}
                       {waResults && (
                         <div style={{ width: "100%", marginTop: 8, fontSize: 13, color: "#555" }}>
-                          + Sent <strong style={{ color: '#22c55e' }}>{waResults.sent}</strong> / {waResults.total} messages.
+                          ✅ Sent <strong style={{ color: '#22c55e' }}>{waResults.sent}</strong> / {waResults.total} messages.
                           {waResults.results.filter(r => !r.success).length > 0 && (
                             <span style={{ color: '#e53e3e', marginLeft: 8 }}>
-                              + Failed: {waResults.results.filter(r => !r.success).map(r => r.name).join(', ')}
+                              ❌ Failed: {waResults.results.filter(r => !r.success).map(r => r.name).join(', ')}
                             </span>
                           )}
                         </div>
@@ -699,22 +699,22 @@ export default function App() {
                         <div>
                           <div className="student-name">{n.name}</div>
                           <div style={{ fontSize: "12px", color: "#607274", marginTop: "2px" }}>
-                            {n.hasPhone ? `+ ${n.phone}` : ''}
-                            {n.hasPhone && n.hasEmail ? '  +  ' : ''}
-                            {n.hasEmail ? `++ ${n.email}` : ''}
-                            {n.noContact ? '++ No phone or email provided' : ''}
+                            {n.hasPhone ? `📱 ${n.phone}` : ''}
+                            {n.hasPhone && n.hasEmail ? '  |  ' : ''}
+                            {n.hasEmail ? `✉️ ${n.email}` : ''}
+                            {n.noContact ? '⚠️ No phone or email provided' : ''}
                           </div>
                         </div>
                       </div>
                       {/* Status badges + action */}
                       <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                         {n.noContact ? (
-                          <span className="grade-badge noti-status-failed">+ No Contact Info</span>
+                          <span className="grade-badge noti-status-failed">⚠️ No Contact Info</span>
                         ) : (
                           <>
                             {n.hasEmail && (
                               <span className={`grade-badge ${n.emailSent ? 'noti-status-success' : 'noti-status-failed'}`}>
-                                {n.emailSent ? '+ Email Sent' : '+ Email Failed'}
+                                {n.emailSent ? '✅ Email Sent' : '❌ Email Failed'}
                               </span>
                             )}
                             {n.hasPhone && (
@@ -725,7 +725,7 @@ export default function App() {
                                 className="btn btn-primary"
                                 style={{ padding: "6px 14px", fontSize: "12px", textDecoration: "none" }}
                               >
-                                + Send WhatsApp
+                                📲 Send WhatsApp
                               </a>
                             )}
                           </>
@@ -851,7 +851,7 @@ export default function App() {
                 <h2 className="modal-name">{selectedStudent.name}</h2>
                 <div className="tp-grade">{selectedStudent.grade} + {selectedStudent.avg}%</div>
               </div>
-              <button onClick={() => setSelectedStudent(null)} className="modal-close">+</button>
+              <button onClick={() => setSelectedStudent(null)} className="modal-close">×</button>
             </div>
             <div className="modal-subjects-container">
               <div className="section-card" style={{ marginBottom: "20px", background: "#f8fafc" }}>
@@ -891,7 +891,7 @@ export default function App() {
                 <h2 className="modal-name">Staff Profile</h2>
                 <p className="header-subtitle">Edit your professional details</p>
               </div>
-              <button className="modal-close" onClick={() => setShowProfile(false)}>+</button>
+              <button className="modal-close" onClick={() => setShowProfile(false)}>×</button>
             </div>
             <form className="profile-form" onSubmit={handleSaveProfile}>
               <div className="profile-input-group">
@@ -967,7 +967,7 @@ export default function App() {
                 <h2 className="modal-name">{selectedStaff.name}</h2>
                 <div className="staff-role-sub">{selectedStaff.role}</div>
               </div>
-              <button onClick={() => setSelectedStaff(null)} className="modal-close">+</button>
+              <button onClick={() => setSelectedStaff(null)} className="modal-close">×</button>
             </div>
             <div className="section-card" style={{ marginTop: "20px", display: "grid", gap: "12px" }}>
               <div>
