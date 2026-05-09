@@ -4,6 +4,9 @@ import { execFile } from 'child_process';
 import fs from 'fs';
 import path from 'path';
 import nodemailer from 'nodemailer';
+import pkg from 'whatsapp-web.js';
+import qrcode from 'qrcode';
+const { Client, LocalAuth } = pkg;
 
 const app = express();
 app.use(cors({ origin: process.env.FRONTEND_URL || '*' }));
@@ -397,6 +400,127 @@ app.post('/api/process-csv', (req, res) => {
         if (fs.existsSync(tmpFile)) fs.unlinkSync(tmpFile);
         res.status(500).json({ error: 'Could not write temp file' });
     }
+});
+
+// ══════════════════════════════════════════════════
+// WhatsApp Automation via whatsapp-web.js
+// ══════════════════════════════════════════════════
+let waClient = null;
+let waStatus = 'disconnected'; // 'disconnected' | 'qr' | 'loading' | 'ready'
+let waQrDataUrl = null;        // base64 QR image for frontend
+
+function initWhatsApp() {
+    if (waClient) return; // already initializing/ready
+
+    waStatus = 'loading';
+    waQrDataUrl = null;
+
+    waClient = new Client({
+        authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
+        puppeteer: {
+            headless: true,
+            args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        }
+    });
+
+    waClient.on('qr', async (qr) => {
+        waStatus = 'qr';
+        waQrDataUrl = await qrcode.toDataURL(qr);
+        console.log('📱 WhatsApp QR code ready — scan in the app.');
+    });
+
+    waClient.on('loading_screen', () => {
+        waStatus = 'loading';
+        waQrDataUrl = null;
+    });
+
+    waClient.on('authenticated', () => {
+        waStatus = 'loading';
+        waQrDataUrl = null;
+        console.log('✅ WhatsApp authenticated.');
+    });
+
+    waClient.on('ready', () => {
+        waStatus = 'ready';
+        waQrDataUrl = null;
+        console.log('✅ WhatsApp client is READY to send messages.');
+    });
+
+    waClient.on('disconnected', (reason) => {
+        console.log('⚠️ WhatsApp disconnected:', reason);
+        waStatus = 'disconnected';
+        waQrDataUrl = null;
+        waClient = null;
+    });
+
+    waClient.initialize();
+}
+
+// GET /api/whatsapp-status  — returns status + QR code if needed
+app.get('/api/whatsapp-status', (req, res) => {
+    res.json({ status: waStatus, qr: waQrDataUrl });
+});
+
+// POST /api/whatsapp-connect  — starts the WhatsApp client
+app.post('/api/whatsapp-connect', (req, res) => {
+    if (waStatus === 'ready') {
+        return res.json({ message: 'Already connected' });
+    }
+    initWhatsApp();
+    res.json({ message: 'WhatsApp client starting…' });
+});
+
+// POST /api/whatsapp-disconnect — destroys the client
+app.post('/api/whatsapp-disconnect', async (req, res) => {
+    if (waClient) {
+        await waClient.destroy();
+        waClient = null;
+    }
+    waStatus = 'disconnected';
+    waQrDataUrl = null;
+    res.json({ message: 'WhatsApp disconnected.' });
+});
+
+// POST /api/send-whatsapp-all
+// Body: { students: [{ phone, message, name }] }
+app.post('/api/send-whatsapp-all', async (req, res) => {
+    if (waStatus !== 'ready') {
+        return res.status(503).json({ error: 'WhatsApp not connected. Scan QR first.' });
+    }
+
+    const { students } = req.body;
+    if (!Array.isArray(students) || students.length === 0) {
+        return res.status(400).json({ error: 'No students provided.' });
+    }
+
+    const results = [];
+
+    for (const s of students) {
+        const digits = (s.phone || '').replace(/\D/g, '');
+        if (digits.length < 7) {
+            results.push({ name: s.name, phone: s.phone, success: false, error: 'Invalid phone' });
+            continue;
+        }
+
+        // WhatsApp chat ID format: <countrycode+number>@c.us
+        const chatId = digits + '@c.us';
+
+        try {
+            await waClient.sendMessage(chatId, s.message);
+            console.log(`✅ WhatsApp sent → ${s.name} (${digits})`);
+            results.push({ name: s.name, phone: s.phone, success: true });
+        } catch (err) {
+            console.error(`❌ WhatsApp FAILED → ${s.name}:`, err.message);
+            results.push({ name: s.name, phone: s.phone, success: false, error: err.message });
+        }
+
+        // Small delay to avoid rate-limiting
+        await new Promise(r => setTimeout(r, 800));
+    }
+
+    const sent = results.filter(r => r.success).length;
+    console.log(`📤 WhatsApp bulk done: ${sent}/${results.length} sent.`);
+    res.json({ results, sent, total: results.length });
 });
 
 // Fallback for React Router - must be the last route

@@ -109,10 +109,75 @@ export default function App() {
   const [allStaff, setAllStaff] = useState([]);
   const fileRef = useRef();
 
+  // WhatsApp automation state
+  const [waStatus, setWaStatus]           = useState('disconnected'); // disconnected | loading | qr | ready
+  const [waQr, setWaQr]                   = useState(null);
+  const [waSending, setWaSending]         = useState(false);
+  const [waResults, setWaResults]         = useState(null);  // { sent, total, results[] }
+  const [showQrModal, setShowQrModal]     = useState(false);
+  const waPollingRef = useRef(null);
+
   useEffect(() => {
     processWithCpp(DEFAULT_CSV);
     fetchStaffDatabase();
   }, []);
+
+  // Poll WhatsApp status every 2s when not ready
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const r = await fetch(`${API_BASE}/api/whatsapp-status`);
+        if (r.ok) {
+          const d = await r.json();
+          setWaStatus(d.status);
+          setWaQr(d.qr || null);
+          if (d.status === 'qr') setShowQrModal(true);
+          if (d.status === 'ready') setShowQrModal(false);
+        }
+      } catch {}
+    };
+    poll();
+    waPollingRef.current = setInterval(poll, 2000);
+    return () => clearInterval(waPollingRef.current);
+  }, []);
+
+  const connectWhatsApp = async () => {
+    await fetch(`${API_BASE}/api/whatsapp-connect`, { method: 'POST' });
+    setWaStatus('loading');
+    setShowQrModal(true);
+  };
+
+  const disconnectWhatsApp = async () => {
+    await fetch(`${API_BASE}/api/whatsapp-disconnect`, { method: 'POST' });
+    setWaStatus('disconnected');
+    setWaQr(null);
+    setShowQrModal(false);
+  };
+
+  const sendAllWhatsApp = async () => {
+    const waList = notifications.filter(n => n.hasPhone && !n.noContact);
+    if (!waList.length) return alert('No students with a valid phone number.');
+    if (waStatus !== 'ready') return alert('Connect WhatsApp first and scan the QR code.');
+
+    setWaSending(true);
+    setWaResults(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/send-whatsapp-all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          students: waList.map(n => ({ name: n.name, phone: n.phone, message: n.message }))
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Send failed');
+      setWaResults(data);
+    } catch (err) {
+      alert('WhatsApp send error: ' + err.message);
+    } finally {
+      setWaSending(false);
+    }
+  };
 
   const handleSaveProfile = async (e) => {
     e.preventDefault();
@@ -245,8 +310,8 @@ export default function App() {
       for (let i = 0; i < targetStudents.length; i++) {
         const s = targetStudents[i];
         // Build subject-wise marks block for WhatsApp
-        const subjectLines = s.marks.map(m => `  • ${m.subject}: ${m.mark}/100`).join("\n");
-        const marksBlock = `\n\n📚 *Subject-wise Marks:*\n${subjectLines}\n\n📊 *Total: ${s.total}/${s.max} | Percentage: ${s.avg}% | Grade: ${s.grade}*`;
+        const subjectLines = s.marks.map(m => `  â€¢ ${m.subject}: ${m.mark}/100`).join("\n");
+        const marksBlock = `\n\nðŸ“š *Subject-wise Marks:*\n${subjectLines}\n\nðŸ“Š *Total: ${s.total}/${s.max} | Percentage: ${s.avg}% | Grade: ${s.grade}*`;
 
         let msg = "";
         if (s.grade === "Distinction") {
@@ -266,7 +331,7 @@ export default function App() {
         const hasEmail = s.email && s.email.includes('@') && s.email.includes('.');
         const hasPhone = s.phone && (s.phone.replace(/\D/g,'').length >= 7);
 
-        // Skip if no contact info — flag with warning
+        // Skip if no contact info â€” flag with warning
         if (!hasEmail && !hasPhone) {
           results.push({ ...s, message: msg, emailSent: false, hasPhone: false, hasEmail: false, noContact: true });
           setGenProgress(i + 1);
@@ -288,7 +353,7 @@ export default function App() {
                 grade: s.grade,
                 total: s.total,
                 maxMarks: s.max,
-                marks: s.marks   // ← subject-wise marks for the email table
+                marks: s.marks   // â† subject-wise marks for the email table
               })
             });
             emailSent = emailRes.ok;
@@ -348,11 +413,11 @@ export default function App() {
             </div>
             <div className="header-actions">
               <button onClick={() => fileRef.current.click()} className="btn btn-outline">
-                📂 Import CSV
+                ðŸ“‚ Import CSV
               </button>
               <input ref={fileRef} type="file" accept=".csv" onChange={handleCSV} style={{ display: "none" }} />
               <button className="profile-btn" onClick={() => setShowProfile(true)}>
-                {staffProfile.name ? staffProfile.name.charAt(0).toUpperCase() : "👤"}
+                {staffProfile.name ? staffProfile.name.charAt(0).toUpperCase() : "ðŸ‘¤"}
               </button>
             </div>
           </div>
@@ -372,12 +437,12 @@ export default function App() {
           <div className="view-fade">
             <div className="stats-grid">
               {[
-                { label: "Total Students", value: stats.total, icon: "👥", color: "#B153D7" },
-                { label: "Class Average", value: stats.classAvg + "%", icon: "📊", color: "#B153D7" },
-                { label: "Distinction", value: stats.distinction, icon: "⭐", color: "#F9B2D7" },
-                { label: "Good", value: stats.good, icon: "✅", color: "#FFB399" },
-                { label: "Average", value: stats.average, icon: "📋", color: "#607274" },
-                { label: "Needs Help", value: stats.poor, icon: "⚠️", color: "#607274" },
+                { label: "Total Students", value: stats.total, icon: "ðŸ‘¥", color: "#B153D7" },
+                { label: "Class Average", value: stats.classAvg + "%", icon: "ðŸ“Š", color: "#B153D7" },
+                { label: "Distinction", value: stats.distinction, icon: "â­", color: "#F9B2D7" },
+                { label: "Good", value: stats.good, icon: "âœ…", color: "#FFB399" },
+                { label: "Average", value: stats.average, icon: "ðŸ“‹", color: "#607274" },
+                { label: "Needs Help", value: stats.poor, icon: "âš ï¸", color: "#607274" },
               ].map(s => (
                 <div key={s.label} className="stat-card">
                   <div className="stat-icon" style={{ background: s.color + "22", color: s.color }}>{s.icon}</div>
@@ -390,14 +455,14 @@ export default function App() {
             <div className="dashboard-sections">
               {stats.topStudent && (
                 <div className="section-card">
-                  <h3 className="section-title">🏆 Top Performer</h3>
+                  <h3 className="section-title">ðŸ† Top Performer</h3>
                   <div className="top-performer">
                     <div className="avatar-large">
                       {stats.topStudent.name.split(" ").map(w => w[0]).join("")}
                     </div>
                     <div>
                       <div className="tp-name">{stats.topStudent.name}</div>
-                      <div className="tp-grade">{stats.topStudent.avg}% — {stats.topStudent.grade}</div>
+                      <div className="tp-grade">{stats.topStudent.avg}% â€” {stats.topStudent.grade}</div>
                       <div className="tp-marks">{stats.topStudent.total}/{stats.topStudent.max} marks</div>
                     </div>
                   </div>
@@ -406,9 +471,9 @@ export default function App() {
               <div className="section-card">
                 <h3 className="section-title">Grade Distribution</h3>
                 {[
-                  { label: "Distinction (≥85%)", count: stats.distinction, color: "#B153D7" },
-                  { label: "Good (70–84%)", count: stats.good, color: "#F9B2D7" },
-                  { label: "Average (50–69%)", count: stats.average, color: "#FFB399" },
+                  { label: "Distinction (â‰¥85%)", count: stats.distinction, color: "#B153D7" },
+                  { label: "Good (70â€“84%)", count: stats.good, color: "#F9B2D7" },
+                  { label: "Average (50â€“69%)", count: stats.average, color: "#FFB399" },
                   { label: "Poor (<50%)", count: stats.poor, color: "#607274" },
                 ].map(g => (
                   <div key={g.label} className="dist-row">
@@ -436,7 +501,7 @@ export default function App() {
               >
                 {generating
                   ? <><span className="spinner" /> Sending {genProgress}/{students.length}...</>
-                  : `✉️ Generate & Send All (${students.length})`}
+                  : `âœ‰ï¸ Generate & Send All (${students.length})`}
               </button>
             </div>
           </div>
@@ -454,7 +519,7 @@ export default function App() {
               <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="sort-select">
                 <option value="avg_desc">Highest First</option>
                 <option value="avg_asc">Lowest First</option>
-                <option value="name">A–Z</option>
+                <option value="name">Aâ€“Z</option>
               </select>
             </div>
 
@@ -488,35 +553,69 @@ export default function App() {
           <div className="view-fade">
             {notifications.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-icon">✉️</div>
+                <div className="empty-icon">âœ‰ï¸</div>
                 <h3 className="empty-title">No Reports Generated</h3>
                 <p className="empty-subtitle">Click "Generate & Send" on the Dashboard to start.</p>
                 <button onClick={() => setView("dashboard")} className="btn btn-primary">Back to Dashboard</button>
               </div>
             ) : (
             <div className="noti-grid" style={{ display: "grid", gap: "20px" }}>
-                {/* ── Send All WhatsApp button ── */}
+
+                {/* â•â•â• WhatsApp Automation Panel â•â•â• */}
                 {(() => {
                   const waList = notifications.filter(n => n.hasPhone && !n.noContact);
-                  if (waList.length === 0) return null;
+                  const statusColor = waStatus === 'ready' ? '#22c55e' : waStatus === 'qr' ? '#f59e0b' : '#94a3b8';
+                  const statusLabel = waStatus === 'ready' ? 'âœ… Connected' : waStatus === 'qr' ? 'ðŸ“± Scan QR' : waStatus === 'loading' ? 'â³ Connectingâ€¦' : 'âš« Disconnected';
                   return (
-                    <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end" }}>
-                      <button
-                        id="send-all-whatsapp-btn"
-                        className="btn btn-primary"
-                        style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 22px", fontSize: "14px", fontWeight: 700 }}
-                        onClick={async () => {
-                          for (let i = 0; i < waList.length; i++) {
-                            const n = waList[i];
-                            const waUrl = `https://wa.me/${n.phone.replace(/\D/g,'')}?text=${encodeURIComponent(n.message)}`;
-                            window.open(waUrl, '_blank');
-                            // Small delay so browser doesn't block popups
-                            if (i < waList.length - 1) await new Promise(r => setTimeout(r, 600));
-                          }
-                        }}
-                      >
-                        💬 Send All WhatsApp ({waList.length})
-                      </button>
+                    <div style={{ gridColumn: "1 / -1", background: "rgba(177,83,215,0.07)", border: "1.5px solid rgba(177,83,215,0.25)", borderRadius: "14px", padding: "18px 22px", display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                      {/* Status dot */}
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", flex: 1 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: "50%", background: statusColor, display: "inline-block", boxShadow: `0 0 6px ${statusColor}` }} />
+                        <span style={{ fontWeight: 600, color: statusColor, fontSize: 13 }}>{statusLabel}</span>
+                        {waList.length > 0 && <span style={{ fontSize: 12, color: "#888", marginLeft: 6 }}>({waList.length} parents with phone)</span>}
+                      </div>
+
+                      {/* Action buttons */}
+                      <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                        {waStatus === 'disconnected' && (
+                          <button id="wa-connect-btn" className="btn btn-primary" style={{ padding: "8px 18px", fontSize: 13 }} onClick={connectWhatsApp}>
+                            ðŸ“² Connect WhatsApp
+                          </button>
+                        )}
+                        {(waStatus === 'loading' || waStatus === 'qr') && (
+                          <button id="wa-qr-btn" className="btn btn-outline" style={{ padding: "8px 18px", fontSize: 13 }} onClick={() => setShowQrModal(true)}>
+                            {waStatus === 'qr' ? 'ðŸ“· View QR Code' : 'â³ Waitingâ€¦'}
+                          </button>
+                        )}
+                        {waStatus === 'ready' && waList.length > 0 && (
+                          <button
+                            id="send-all-whatsapp-btn"
+                            className="btn btn-primary"
+                            style={{ padding: "8px 22px", fontSize: 13, fontWeight: 700, display: 'flex', alignItems: 'center', gap: 6 }}
+                            disabled={waSending}
+                            onClick={sendAllWhatsApp}
+                          >
+                            {waSending ? <><span className="spinner" /> Sendingâ€¦</> : `ðŸ’¬ Send All WhatsApp (${waList.length})`}
+                          </button>
+                        )}
+                        {waStatus === 'ready' && (
+                          <button id="wa-disconnect-btn" className="btn btn-outline" style={{ padding: "8px 14px", fontSize: 12, color: '#e53e3e', borderColor: '#fed7d7' }} onClick={disconnectWhatsApp}>
+                            Disconnect
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Results summary */}
+                      {waResults && (
+                        <div style={{ width: "100%", marginTop: 8, fontSize: 13, color: "#555" }}>
+                          ðŸ“¤ Sent <strong style={{ color: '#22c55e' }}>{waResults.sent}</strong> / {waResults.total} messages.
+                          {waResults.results.filter(r => !r.success).length > 0 && (
+                            <span style={{ color: '#e53e3e', marginLeft: 8 }}>
+                              âŒ Failed: {waResults.results.filter(r => !r.success).map(r => r.name).join(', ')}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   );
                 })()}
@@ -529,22 +628,22 @@ export default function App() {
                         <div>
                           <div className="student-name">{n.name}</div>
                           <div style={{ fontSize: "12px", color: "#607274", marginTop: "2px" }}>
-                            {n.hasPhone ? `📱 ${n.phone}` : ''}
-                            {n.hasPhone && n.hasEmail ? '  ·  ' : ''}
-                            {n.hasEmail ? `✉️ ${n.email}` : ''}
-                            {n.noContact ? '⚠️ No phone or email provided' : ''}
+                            {n.hasPhone ? `ðŸ“± ${n.phone}` : ''}
+                            {n.hasPhone && n.hasEmail ? '  Â·  ' : ''}
+                            {n.hasEmail ? `âœ‰ï¸ ${n.email}` : ''}
+                            {n.noContact ? 'âš ï¸ No phone or email provided' : ''}
                           </div>
                         </div>
                       </div>
                       {/* Status badges + action */}
                       <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                         {n.noContact ? (
-                          <span className="grade-badge noti-status-failed">⚠ No Contact Info</span>
+                          <span className="grade-badge noti-status-failed">âš  No Contact Info</span>
                         ) : (
                           <>
                             {n.hasEmail && (
                               <span className={`grade-badge ${n.emailSent ? 'noti-status-success' : 'noti-status-failed'}`}>
-                                {n.emailSent ? '✉ Email Sent' : '✉ Email Failed'}
+                                {n.emailSent ? 'âœ‰ Email Sent' : 'âœ‰ Email Failed'}
                               </span>
                             )}
                             {n.hasPhone && (
@@ -555,7 +654,7 @@ export default function App() {
                                 className="btn btn-primary"
                                 style={{ padding: "6px 14px", fontSize: "12px", textDecoration: "none" }}
                               >
-                                💬 Send WhatsApp
+                                ðŸ’¬ Send WhatsApp
                               </a>
                             )}
                           </>
@@ -612,9 +711,9 @@ export default function App() {
               </div>
               <div className="modal-name-container">
                 <h2 className="modal-name">{selectedStudent.name}</h2>
-                <div className="tp-grade">{selectedStudent.grade} — {selectedStudent.avg}%</div>
+                <div className="tp-grade">{selectedStudent.grade} â€” {selectedStudent.avg}%</div>
               </div>
-              <button onClick={() => setSelectedStudent(null)} className="modal-close">✕</button>
+              <button onClick={() => setSelectedStudent(null)} className="modal-close">âœ•</button>
             </div>
             <div className="modal-subjects-container">
               <div className="section-card" style={{ marginBottom: "20px", background: "#f8fafc" }}>
@@ -648,13 +747,13 @@ export default function App() {
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div className="avatar-xl" style={{ background: "linear-gradient(135deg, #B153D7, #FFB399)", color: "#fff" }}>
-                {staffProfile.name ? staffProfile.name.charAt(0).toUpperCase() : "👤"}
+                {staffProfile.name ? staffProfile.name.charAt(0).toUpperCase() : "ðŸ‘¤"}
               </div>
               <div className="modal-name-container">
                 <h2 className="modal-name">Staff Profile</h2>
                 <p className="header-subtitle">Edit your professional details</p>
               </div>
-              <button className="modal-close" onClick={() => setShowProfile(false)}>✕</button>
+              <button className="modal-close" onClick={() => setShowProfile(false)}>âœ•</button>
             </div>
             <form className="profile-form" onSubmit={handleSaveProfile}>
               <div className="profile-input-group">
@@ -730,7 +829,7 @@ export default function App() {
                 <h2 className="modal-name">{selectedStaff.name}</h2>
                 <div className="staff-role-sub">{selectedStaff.role}</div>
               </div>
-              <button onClick={() => setSelectedStaff(null)} className="modal-close">✕</button>
+              <button onClick={() => setSelectedStaff(null)} className="modal-close">âœ•</button>
             </div>
             <div className="section-card" style={{ marginTop: "20px", display: "grid", gap: "12px" }}>
               <div>
@@ -741,6 +840,43 @@ export default function App() {
                 <div className="stat-label">Gender</div>
                 <div className="tp-name">{selectedStaff.gender || "Not set"}</div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* WhatsApp QR Modal */}
+      {showQrModal && (
+        <div className="modal-overlay" onClick={() => setShowQrModal(false)}>
+          <div className="modal-content" style={{ maxWidth: 380, textAlign: 'center' }} onClick={e => e.stopPropagation()}>
+            <div className="modal-header" style={{ justifyContent: 'space-between' }}>
+              <div className="modal-name-container">
+                <h2 className="modal-name">Connect WhatsApp</h2>
+                <p style={{ fontSize: 13, color: '#888', margin: 0 }}>Scan with your phone to send messages automatically</p>
+              </div>
+              <button className="modal-close" onClick={() => setShowQrModal(false)}>X</button>
+            </div>
+            <div style={{ padding: '24px 0' }}>
+              {waStatus === 'loading' && (
+                <div style={{ padding: 40, color: '#888' }}>
+                  <span className="spinner" style={{ width: 36, height: 36, borderWidth: 4 }} />
+                  <p style={{ marginTop: 16, fontSize: 14 }}>Starting WhatsApp Web...<br/>This may take 20-30 seconds.</p>
+                </div>
+              )}
+              {waStatus === 'qr' && waQr && (
+                <div>
+                  <img src={waQr} alt="WhatsApp QR Code" style={{ width: 240, height: 240, borderRadius: 12, border: '4px solid #B153D7', boxShadow: '0 4px 24px rgba(177,83,215,0.2)' }} />
+                  <p style={{ fontSize: 13, color: '#666', marginTop: 14 }}>Open WhatsApp &rarr; Linked Devices &rarr; Link a Device &rarr; Scan this QR</p>
+                </div>
+              )}
+              {waStatus === 'ready' && (
+                <div style={{ padding: 30 }}>
+                  <div style={{ fontSize: 48 }}>&#10004;</div>
+                  <p style={{ color: '#22c55e', fontWeight: 700, marginTop: 8 }}>WhatsApp Connected!</p>
+                  <p style={{ fontSize: 13, color: '#888' }}>You can now send messages to all parents.</p>
+                  <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setShowQrModal(false)}>Close</button>
+                </div>
+              )}
             </div>
           </div>
         </div>
