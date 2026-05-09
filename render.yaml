@@ -4,13 +4,10 @@ services:
     runtime: node
     plan: free
 
-    # Install Chrome + build dependencies, then install npm packages and build React
+    # Install npm packages and build React, caching Puppeteer in Render's build cache
     buildCommand: |
-      apt-get update && apt-get install -y \
-        wget gnupg ca-certificates \
-        google-chrome-stable \
-        --no-install-recommends && \
-      npm install && \
+      export PUPPETEER_CACHE_DIR=/opt/render/project/puppeteer
+      npm install
       npm run build
 
     # Start the Express server (serves built React + API)
@@ -19,11 +16,11 @@ services:
     envVars:
       - key: NODE_ENV
         value: production
-      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
-        value: "true"          # Don't download bundled Chromium — use system Chrome
+      - key: PUPPETEER_CACHE_DIR
+        value: /opt/render/project/puppeteer
       - key: BREVO_KEY
-        sync: false            # Set this in Render Dashboard → Environment
+        sync: false            # Set this in Render Dashboard -> Environment
       - key: SENDER_EMAIL
-        sync: false            # Set this in Render Dashboard → Environment
+        sync: false            # Set this in Render Dashboard -> Environment
       - key: FRONTEND_URL
         sync: false            # e.g. https://edunotify.onrender.com

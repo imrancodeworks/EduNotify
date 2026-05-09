@@ -415,19 +415,10 @@ function initWhatsApp() {
     waStatus = 'loading';
     waQrDataUrl = null;
 
-    // Detect Chrome path: Render Linux vs local Windows/Mac
-    const chromePaths = [
-        '/usr/bin/google-chrome-stable',   // Render (Ubuntu)
-        '/usr/bin/chromium-browser',        // Some Linux distros
-        '/usr/bin/chromium',
-    ];
-    const executablePath = chromePaths.find(p => fs.existsSync(p)) || undefined;
-
     waClient = new Client({
         authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
         puppeteer: {
             headless: true,
-            executablePath,   // undefined = use bundled Chromium (local dev)
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
