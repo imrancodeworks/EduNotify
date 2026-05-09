@@ -118,6 +118,14 @@ export default function App() {
   const [showQrModal, setShowQrModal]     = useState(false);
   const waPollingRef = useRef(null);
 
+  // Meeting Form state
+  const [meetingForm, setMeetingForm] = useState({
+    date: "",
+    time: "",
+    event: "Parent-Teacher Meeting",
+    venue: "",
+  });
+
   useEffect(() => {
     processWithCpp(DEFAULT_CSV);
     fetchStaffDatabase();
@@ -174,6 +182,34 @@ export default function App() {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Send failed');
       setWaResults(data);
+    } catch (err) {
+      alert('WhatsApp send error: ' + err.message);
+    } finally {
+      setWaSending(false);
+    }
+  };
+
+  const sendMeetingWhatsApp = async () => {
+    if (waStatus !== 'ready') return alert('Connect WhatsApp first and scan the QR code.');
+    if (!meetingForm.date || !meetingForm.time || !meetingForm.venue) return alert('Please fill in all meeting details.');
+
+    const waList = students.filter(s => s.phone).map(s => {
+      const msg = `Dear Parent/Guardian of ${s.name},\n\nYou are invited to a ${meetingForm.event}.\n\n📅 Date: ${meetingForm.date}\n⏰ Time: ${meetingForm.time}\n📍 Venue: ${meetingForm.venue}\n👤 Teacher: ${staffProfile.name}\n\nPlease make sure to attend to discuss your ward's performance. Looking forward to meeting you.\n\nBest Regards,\nEduNotify / ${staffProfile.name}`;
+      return { name: s.name, phone: s.phone, message: msg };
+    });
+
+    if (waList.length === 0) return alert('No valid parent phone numbers found.');
+
+    setWaSending(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/send-whatsapp-all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ students: waList })
+      });
+      const data = await res.json();
+      setWaResults({ sent: data.sent, total: data.total, results: data.results });
+      alert(`Meeting invitations sent successfully to ${data.sent} out of ${data.total} parents.`);
     } catch (err) {
       alert('WhatsApp send error: ' + err.message);
     } finally {
@@ -424,7 +460,7 @@ export default function App() {
             </div>
           </div>
           <nav className="nav-tabs">
-            {["dashboard", "students", "notifications", "staff"].map(v => (
+            {["dashboard", "students", "notifications", "meeting", "staff"].map(v => (
               <button key={v} onClick={() => setView(v)} className={`nav-tab ${view === v ? "nav-tab-active" : "nav-tab-inactive"}`}>
                 {v.charAt(0).toUpperCase() + v.slice(1)}
               </button>
@@ -698,6 +734,63 @@ export default function App() {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {/* Meeting View */}
+        {view === "meeting" && (
+          <div className="view-fade">
+            <div className="dashboard-sections">
+              <div className="section-card" style={{ maxWidth: "800px", margin: "0 auto" }}>
+                <h3 className="section-title">📅 Schedule Parent-Teacher Meeting</h3>
+                <p style={{ color: "#607274", marginBottom: "24px" }}>Create and send automated meeting invitations to all parents via WhatsApp.</p>
+                
+                <form className="profile-form" style={{ margin: "0" }}>
+                  <div className="profile-input-group">
+                    <label>Event Name</label>
+                    <input type="text" value={meetingForm.event} onChange={e => setMeetingForm({...meetingForm, event: e.target.value})} placeholder="e.g. Monthly Performance Review" required />
+                  </div>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "20px" }}>
+                    <div className="profile-input-group">
+                      <label>Date</label>
+                      <input type="date" value={meetingForm.date} onChange={e => setMeetingForm({...meetingForm, date: e.target.value})} required />
+                    </div>
+                    <div className="profile-input-group">
+                      <label>Time</label>
+                      <input type="time" value={meetingForm.time} onChange={e => setMeetingForm({...meetingForm, time: e.target.value})} required />
+                    </div>
+                  </div>
+                  <div className="profile-input-group">
+                    <label>Venue / Platform</label>
+                    <input type="text" value={meetingForm.venue} onChange={e => setMeetingForm({...meetingForm, venue: e.target.value})} placeholder="e.g. Room 101 or Google Meet Link" required />
+                  </div>
+                  <div className="profile-input-group">
+                    <label>Organizing Teacher</label>
+                    <input type="text" value={staffProfile.name} disabled style={{ background: "#f5f5f5", color: "#666" }} />
+                  </div>
+                  
+                  <div style={{ marginTop: "30px", borderTop: "1px solid #eee", paddingTop: "20px" }}>
+                    <h4 style={{ margin: "0 0 10px 0", color: "#333" }}>WhatsApp Message Preview</h4>
+                    <div style={{ background: "#f8f9fa", padding: "16px", borderRadius: "10px", fontSize: "14px", color: "#444", whiteSpace: "pre-wrap", borderLeft: "4px solid #22c55e", lineHeight: "1.5" }}>
+                      {`Dear Parent/Guardian of [Student Name],\n\nYou are invited to a ${meetingForm.event}.\n\n📅 Date: ${meetingForm.date || '[Select Date]'}\n⏰ Time: ${meetingForm.time || '[Select Time]'}\n📍 Venue: ${meetingForm.venue || '[Select Venue]'}\n👤 Teacher: ${staffProfile.name}\n\nPlease make sure to attend to discuss your ward's performance. Looking forward to meeting you.\n\nBest Regards,\nEduNotify / ${staffProfile.name}`}
+                    </div>
+                  </div>
+
+                  <div style={{ marginTop: "24px", display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
+                    <button 
+                      type="button" 
+                      className="btn btn-primary" 
+                      disabled={waStatus !== 'ready' || waSending || !meetingForm.date || !meetingForm.time || !meetingForm.venue}
+                      onClick={sendMeetingWhatsApp}
+                      style={{ padding: "12px 24px", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px" }}
+                    >
+                      {waSending ? <><span className="spinner" /> Sending to All...</> : "📲 Send Invites to All Parents"}
+                    </button>
+                    {waStatus !== 'ready' && <span style={{ color: "#ef4444", fontSize: "13px", fontWeight: "600" }}>⚠️ WhatsApp not connected. Please connect in Dashboard.</span>}
+                  </div>
+                </form>
+              </div>
             </div>
           </div>
         )}
