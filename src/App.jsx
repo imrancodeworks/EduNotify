@@ -310,8 +310,8 @@ export default function App() {
       for (let i = 0; i < targetStudents.length; i++) {
         const s = targetStudents[i];
         // Build subject-wise marks block for WhatsApp
-        const subjectLines = s.marks.map(m => `  â€¢ ${m.subject}: ${m.mark}/100`).join("\n");
-        const marksBlock = `\n\nðŸ“š *Subject-wise Marks:*\n${subjectLines}\n\nðŸ“Š *Total: ${s.total}/${s.max} | Percentage: ${s.avg}% | Grade: ${s.grade}*`;
+        const subjectLines = s.marks.map(m => `  + ${m.subject}: ${m.mark}/100`).join("\n");
+        const marksBlock = `\n\n+ *Subject-wise Marks:*\n${subjectLines}\n\n+ *Total: ${s.total}/${s.max} | Percentage: ${s.avg}% | Grade: ${s.grade}*`;
 
         let msg = "";
         if (s.grade === "Distinction") {
@@ -331,7 +331,7 @@ export default function App() {
         const hasEmail = s.email && s.email.includes('@') && s.email.includes('.');
         const hasPhone = s.phone && (s.phone.replace(/\D/g,'').length >= 7);
 
-        // Skip if no contact info â€” flag with warning
+        // Skip if no contact info + flag with warning
         if (!hasEmail && !hasPhone) {
           results.push({ ...s, message: msg, emailSent: false, hasPhone: false, hasEmail: false, noContact: true });
           setGenProgress(i + 1);
@@ -353,7 +353,7 @@ export default function App() {
                 grade: s.grade,
                 total: s.total,
                 maxMarks: s.max,
-                marks: s.marks   // â† subject-wise marks for the email table
+                marks: s.marks   // + subject-wise marks for the email table
               })
             });
             emailSent = emailRes.ok;
@@ -413,11 +413,11 @@ export default function App() {
             </div>
             <div className="header-actions">
               <button onClick={() => fileRef.current.click()} className="btn btn-outline">
-                ðŸ“‚ Import CSV
+                + Import CSV
               </button>
               <input ref={fileRef} type="file" accept=".csv" onChange={handleCSV} style={{ display: "none" }} />
               <button className="profile-btn" onClick={() => setShowProfile(true)}>
-                {staffProfile.name ? staffProfile.name.charAt(0).toUpperCase() : "ðŸ‘¤"}
+                {staffProfile.name ? staffProfile.name.charAt(0).toUpperCase() : "+"}
               </button>
             </div>
           </div>
@@ -437,12 +437,12 @@ export default function App() {
           <div className="view-fade">
             <div className="stats-grid">
               {[
-                { label: "Total Students", value: stats.total, icon: "ðŸ‘¥", color: "#B153D7" },
-                { label: "Class Average", value: stats.classAvg + "%", icon: "ðŸ“Š", color: "#B153D7" },
-                { label: "Distinction", value: stats.distinction, icon: "â­", color: "#F9B2D7" },
-                { label: "Good", value: stats.good, icon: "âœ…", color: "#FFB399" },
-                { label: "Average", value: stats.average, icon: "ðŸ“‹", color: "#607274" },
-                { label: "Needs Help", value: stats.poor, icon: "âš ï¸", color: "#607274" },
+                { label: "Total Students", value: stats.total, icon: "+", color: "#B153D7" },
+                { label: "Class Average", value: stats.classAvg + "%", icon: "+", color: "#B153D7" },
+                { label: "Distinction", value: stats.distinction, icon: "+", color: "#F9B2D7" },
+                { label: "Good", value: stats.good, icon: "+", color: "#FFB399" },
+                { label: "Average", value: stats.average, icon: "++", color: "#607274" },
+                { label: "Needs Help", value: stats.poor, icon: "++", color: "#607274" },
               ].map(s => (
                 <div key={s.label} className="stat-card">
                   <div className="stat-icon" style={{ background: s.color + "22", color: s.color }}>{s.icon}</div>
@@ -455,14 +455,14 @@ export default function App() {
             <div className="dashboard-sections">
               {stats.topStudent && (
                 <div className="section-card">
-                  <h3 className="section-title">ðŸ† Top Performer</h3>
+                  <h3 className="section-title">+ Top Performer</h3>
                   <div className="top-performer">
                     <div className="avatar-large">
                       {stats.topStudent.name.split(" ").map(w => w[0]).join("")}
                     </div>
                     <div>
                       <div className="tp-name">{stats.topStudent.name}</div>
-                      <div className="tp-grade">{stats.topStudent.avg}% â€” {stats.topStudent.grade}</div>
+                      <div className="tp-grade">{stats.topStudent.avg}% + {stats.topStudent.grade}</div>
                       <div className="tp-marks">{stats.topStudent.total}/{stats.topStudent.max} marks</div>
                     </div>
                   </div>
@@ -471,9 +471,9 @@ export default function App() {
               <div className="section-card">
                 <h3 className="section-title">Grade Distribution</h3>
                 {[
-                  { label: "Distinction (â‰¥85%)", count: stats.distinction, color: "#B153D7" },
-                  { label: "Good (70â€“84%)", count: stats.good, color: "#F9B2D7" },
-                  { label: "Average (50â€“69%)", count: stats.average, color: "#FFB399" },
+                  { label: "Distinction (+85%)", count: stats.distinction, color: "#B153D7" },
+                  { label: "Good (70+84%)", count: stats.good, color: "#F9B2D7" },
+                  { label: "Average (50+69%)", count: stats.average, color: "#FFB399" },
                   { label: "Poor (<50%)", count: stats.poor, color: "#607274" },
                 ].map(g => (
                   <div key={g.label} className="dist-row">
@@ -501,7 +501,7 @@ export default function App() {
               >
                 {generating
                   ? <><span className="spinner" /> Sending {genProgress}/{students.length}...</>
-                  : `âœ‰ï¸ Generate & Send All (${students.length})`}
+                  : `++ Generate & Send All (${students.length})`}
               </button>
             </div>
           </div>
@@ -519,7 +519,7 @@ export default function App() {
               <select value={sortBy} onChange={e => setSortBy(e.target.value)} className="sort-select">
                 <option value="avg_desc">Highest First</option>
                 <option value="avg_asc">Lowest First</option>
-                <option value="name">Aâ€“Z</option>
+                <option value="name">A+Z</option>
               </select>
             </div>
 
@@ -553,7 +553,7 @@ export default function App() {
           <div className="view-fade">
             {notifications.length === 0 ? (
               <div className="empty-state">
-                <div className="empty-icon">âœ‰ï¸</div>
+                <div className="empty-icon">++</div>
                 <h3 className="empty-title">No Reports Generated</h3>
                 <p className="empty-subtitle">Click "Generate & Send" on the Dashboard to start.</p>
                 <button onClick={() => setView("dashboard")} className="btn btn-primary">Back to Dashboard</button>
@@ -561,11 +561,11 @@ export default function App() {
             ) : (
             <div className="noti-grid" style={{ display: "grid", gap: "20px" }}>
 
-                {/* â•â•â• WhatsApp Automation Panel â•â•â• */}
+                {/* +++ WhatsApp Automation Panel +++ */}
                 {(() => {
                   const waList = notifications.filter(n => n.hasPhone && !n.noContact);
                   const statusColor = waStatus === 'ready' ? '#22c55e' : waStatus === 'qr' ? '#f59e0b' : '#94a3b8';
-                  const statusLabel = waStatus === 'ready' ? 'âœ… Connected' : waStatus === 'qr' ? 'ðŸ“± Scan QR' : waStatus === 'loading' ? 'â³ Connectingâ€¦' : 'âš« Disconnected';
+                  const statusLabel = waStatus === 'ready' ? '+ Connected' : waStatus === 'qr' ? '+ Scan QR' : waStatus === 'loading' ? '+| Connecting+' : '+ Disconnected';
                   return (
                     <div style={{ gridColumn: "1 / -1", background: "rgba(177,83,215,0.07)", border: "1.5px solid rgba(177,83,215,0.25)", borderRadius: "14px", padding: "18px 22px", display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
                       {/* Status dot */}
@@ -579,12 +579,12 @@ export default function App() {
                       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
                         {waStatus === 'disconnected' && (
                           <button id="wa-connect-btn" className="btn btn-primary" style={{ padding: "8px 18px", fontSize: 13 }} onClick={connectWhatsApp}>
-                            ðŸ“² Connect WhatsApp
+                            + Connect WhatsApp
                           </button>
                         )}
                         {(waStatus === 'loading' || waStatus === 'qr') && (
                           <button id="wa-qr-btn" className="btn btn-outline" style={{ padding: "8px 18px", fontSize: 13 }} onClick={() => setShowQrModal(true)}>
-                            {waStatus === 'qr' ? 'ðŸ“· View QR Code' : 'â³ Waitingâ€¦'}
+                            {waStatus === 'qr' ? '+ View QR Code' : '+| Waiting+'}
                           </button>
                         )}
                         {waStatus === 'ready' && waList.length > 0 && (
@@ -595,7 +595,7 @@ export default function App() {
                             disabled={waSending}
                             onClick={sendAllWhatsApp}
                           >
-                            {waSending ? <><span className="spinner" /> Sendingâ€¦</> : `ðŸ’¬ Send All WhatsApp (${waList.length})`}
+                            {waSending ? <><span className="spinner" /> Sending+</> : `+ Send All WhatsApp (${waList.length})`}
                           </button>
                         )}
                         {waStatus === 'ready' && (
@@ -608,10 +608,10 @@ export default function App() {
                       {/* Results summary */}
                       {waResults && (
                         <div style={{ width: "100%", marginTop: 8, fontSize: 13, color: "#555" }}>
-                          ðŸ“¤ Sent <strong style={{ color: '#22c55e' }}>{waResults.sent}</strong> / {waResults.total} messages.
+                          + Sent <strong style={{ color: '#22c55e' }}>{waResults.sent}</strong> / {waResults.total} messages.
                           {waResults.results.filter(r => !r.success).length > 0 && (
                             <span style={{ color: '#e53e3e', marginLeft: 8 }}>
-                              âŒ Failed: {waResults.results.filter(r => !r.success).map(r => r.name).join(', ')}
+                              + Failed: {waResults.results.filter(r => !r.success).map(r => r.name).join(', ')}
                             </span>
                           )}
                         </div>
@@ -628,22 +628,22 @@ export default function App() {
                         <div>
                           <div className="student-name">{n.name}</div>
                           <div style={{ fontSize: "12px", color: "#607274", marginTop: "2px" }}>
-                            {n.hasPhone ? `ðŸ“± ${n.phone}` : ''}
-                            {n.hasPhone && n.hasEmail ? '  Â·  ' : ''}
-                            {n.hasEmail ? `âœ‰ï¸ ${n.email}` : ''}
-                            {n.noContact ? 'âš ï¸ No phone or email provided' : ''}
+                            {n.hasPhone ? `+ ${n.phone}` : ''}
+                            {n.hasPhone && n.hasEmail ? '  +  ' : ''}
+                            {n.hasEmail ? `++ ${n.email}` : ''}
+                            {n.noContact ? '++ No phone or email provided' : ''}
                           </div>
                         </div>
                       </div>
                       {/* Status badges + action */}
                       <div style={{ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap" }}>
                         {n.noContact ? (
-                          <span className="grade-badge noti-status-failed">âš  No Contact Info</span>
+                          <span className="grade-badge noti-status-failed">+ No Contact Info</span>
                         ) : (
                           <>
                             {n.hasEmail && (
                               <span className={`grade-badge ${n.emailSent ? 'noti-status-success' : 'noti-status-failed'}`}>
-                                {n.emailSent ? 'âœ‰ Email Sent' : 'âœ‰ Email Failed'}
+                                {n.emailSent ? '+ Email Sent' : '+ Email Failed'}
                               </span>
                             )}
                             {n.hasPhone && (
@@ -654,7 +654,7 @@ export default function App() {
                                 className="btn btn-primary"
                                 style={{ padding: "6px 14px", fontSize: "12px", textDecoration: "none" }}
                               >
-                                ðŸ’¬ Send WhatsApp
+                                + Send WhatsApp
                               </a>
                             )}
                           </>
@@ -711,9 +711,9 @@ export default function App() {
               </div>
               <div className="modal-name-container">
                 <h2 className="modal-name">{selectedStudent.name}</h2>
-                <div className="tp-grade">{selectedStudent.grade} â€” {selectedStudent.avg}%</div>
+                <div className="tp-grade">{selectedStudent.grade} + {selectedStudent.avg}%</div>
               </div>
-              <button onClick={() => setSelectedStudent(null)} className="modal-close">âœ•</button>
+              <button onClick={() => setSelectedStudent(null)} className="modal-close">+</button>
             </div>
             <div className="modal-subjects-container">
               <div className="section-card" style={{ marginBottom: "20px", background: "#f8fafc" }}>
@@ -747,13 +747,13 @@ export default function App() {
           <div className="modal-content" onClick={e => e.stopPropagation()}>
             <div className="modal-header">
               <div className="avatar-xl" style={{ background: "linear-gradient(135deg, #B153D7, #FFB399)", color: "#fff" }}>
-                {staffProfile.name ? staffProfile.name.charAt(0).toUpperCase() : "ðŸ‘¤"}
+                {staffProfile.name ? staffProfile.name.charAt(0).toUpperCase() : "+"}
               </div>
               <div className="modal-name-container">
                 <h2 className="modal-name">Staff Profile</h2>
                 <p className="header-subtitle">Edit your professional details</p>
               </div>
-              <button className="modal-close" onClick={() => setShowProfile(false)}>âœ•</button>
+              <button className="modal-close" onClick={() => setShowProfile(false)}>+</button>
             </div>
             <form className="profile-form" onSubmit={handleSaveProfile}>
               <div className="profile-input-group">
@@ -829,7 +829,7 @@ export default function App() {
                 <h2 className="modal-name">{selectedStaff.name}</h2>
                 <div className="staff-role-sub">{selectedStaff.role}</div>
               </div>
-              <button onClick={() => setSelectedStaff(null)} className="modal-close">âœ•</button>
+              <button onClick={() => setSelectedStaff(null)} className="modal-close">+</button>
             </div>
             <div className="section-card" style={{ marginTop: "20px", display: "grid", gap: "12px" }}>
               <div>
