@@ -1009,10 +1009,19 @@ export default function App() {
                   <button className="btn btn-outline" style={{ marginTop: 12, borderColor: '#ef4444', color: '#ef4444' }} onClick={() => setShowQrModal(false)}>Close</button>
                 </div>
               )}
-              {waStatus === 'qr' && waQr && (
+              {waStatus === 'qr' && (
                 <div>
-                  <img src={waQr} alt="WhatsApp QR Code" style={{ width: 240, height: 240, borderRadius: 12, border: '4px solid #B153D7', boxShadow: '0 4px 24px rgba(177,83,215,0.2)' }} />
-                  <p style={{ fontSize: 13, color: '#666', marginTop: 14 }}>Open WhatsApp &rarr; Linked Devices &rarr; Link a Device &rarr; Scan this QR</p>
+                  {waQr ? (
+                    <>
+                      <img src={waQr} alt="WhatsApp QR Code" style={{ width: 240, height: 240, borderRadius: 12, border: '4px solid #B153D7', boxShadow: '0 4px 24px rgba(177,83,215,0.2)' }} />
+                      <p style={{ fontSize: 13, color: '#666', marginTop: 14 }}>Open WhatsApp &rarr; Linked Devices &rarr; Link a Device &rarr; Scan this QR</p>
+                    </>
+                  ) : (
+                    <div style={{ padding: 40, color: '#888' }}>
+                      <span className="spinner" style={{ width: 36, height: 36, borderWidth: 4 }} />
+                      <p style={{ marginTop: 16, fontSize: 14 }}>Generating QR Code...</p>
+                    </div>
+                  )}
                 </div>
               )}
               {waStatus === 'ready' && (
