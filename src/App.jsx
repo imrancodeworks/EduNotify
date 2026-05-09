@@ -283,7 +283,8 @@ export default function App() {
                 avg: s.avg,
                 grade: s.grade,
                 total: s.total,
-                maxMarks: s.max
+                maxMarks: s.max,
+                marks: s.marks   // ← subject-wise marks for the email table
               })
             });
             emailSent = emailRes.ok;
@@ -490,6 +491,31 @@ export default function App() {
               </div>
             ) : (
             <div className="noti-grid" style={{ display: "grid", gap: "20px" }}>
+                {/* ── Send All WhatsApp button ── */}
+                {(() => {
+                  const waList = notifications.filter(n => n.hasPhone && !n.noContact);
+                  if (waList.length === 0) return null;
+                  return (
+                    <div style={{ gridColumn: "1 / -1", display: "flex", justifyContent: "flex-end" }}>
+                      <button
+                        id="send-all-whatsapp-btn"
+                        className="btn btn-primary"
+                        style={{ display: "flex", alignItems: "center", gap: "8px", padding: "10px 22px", fontSize: "14px", fontWeight: 700 }}
+                        onClick={async () => {
+                          for (let i = 0; i < waList.length; i++) {
+                            const n = waList[i];
+                            const waUrl = `https://wa.me/${n.phone.replace(/\D/g,'')}?text=${encodeURIComponent(n.message)}`;
+                            window.open(waUrl, '_blank');
+                            // Small delay so browser doesn't block popups
+                            if (i < waList.length - 1) await new Promise(r => setTimeout(r, 600));
+                          }
+                        }}
+                      >
+                        💬 Send All WhatsApp ({waList.length})
+                      </button>
+                    </div>
+                  );
+                })()}
                 {notifications.map((n, i) => (
                   <div key={i} className={`section-card ${n.noContact ? 'noti-no-contact' : ''}`}>
                     {/* Card header row */}

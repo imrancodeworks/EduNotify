@@ -192,7 +192,7 @@ app.post('/api/auth/reset-password', (req, res) => {
 // send parent notification email
 app.post('/api/send-notification-email', async (req, res) => {
     try {
-        const { to, studentName, message, avg, grade, total, maxMarks } = req.body;
+        const { to, studentName, message, avg, grade, total, maxMarks, marks } = req.body;
 
         if (!to || !to.includes('@')) {
             return res.status(400).json({ error: 'Not a valid email' });
@@ -251,6 +251,35 @@ app.post('/api/send-notification-email', async (req, res) => {
                                 <span style="font-size: 12px; color: #888;">Grade</span>
                             </div>
                         </div>
+
+                        ${Array.isArray(marks) && marks.length > 0 ? `
+                        <div style="margin-top: 24px;">
+                            <h3 style="font-size: 14px; color: #555; margin-bottom: 10px; font-family: Arial, sans-serif;">📚 Subject-wise Marks</h3>
+                            <table style="width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 13px;">
+                                <thead>
+                                    <tr style="background: linear-gradient(135deg, #B153D7, #FFB399);">
+                                        <th style="padding: 8px 12px; text-align: left; color: white; border-radius: 4px 0 0 0;">Subject</th>
+                                        <th style="padding: 8px 12px; text-align: center; color: white;">Marks</th>
+                                        <th style="padding: 8px 12px; text-align: center; color: white; border-radius: 0 4px 0 0;">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${marks.map((m, idx) => {
+                                        const pct = m.mark;
+                                        const subStatus = pct >= 85 ? 'Distinction' : pct >= 70 ? 'Good' : pct >= 50 ? 'Average' : 'Poor';
+                                        const subColor = pct >= 85 ? '#B153D7' : pct >= 70 ? '#d687b8' : pct >= 50 ? '#e68a68' : '#e53e3e';
+                                        const rowBg = idx % 2 === 0 ? '#fafafa' : '#fff';
+                                        return `<tr style="background: ${rowBg};">
+                                            <td style="padding: 8px 12px; color: #333; border-bottom: 1px solid #eee;">${m.subject}</td>
+                                            <td style="padding: 8px 12px; text-align: center; font-weight: bold; color: ${subColor}; border-bottom: 1px solid #eee;">${m.mark}/100</td>
+                                            <td style="padding: 8px 12px; text-align: center; border-bottom: 1px solid #eee;">
+                                                <span style="background: ${subColor}22; color: ${subColor}; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold;">${subStatus}</span>
+                                            </td>
+                                        </tr>`;
+                                    }).join('')}
+                                </tbody>
+                            </table>
+                        </div>` : ''}
 
                         <p style="color: #bbb; font-size: 11px; text-align: center; margin-top: 24px;">Sent by EduNotify - Ramco Institute of Technology</p>
                     </div>
