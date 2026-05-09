@@ -206,7 +206,7 @@ app.post('/api/send-notification-email', async (req, res) => {
         else if (grade === 'Good') color = '#d687b8';
         else if (grade === 'Average') color = '#e68a68';
 
-        const formattedMsg = message.replace(/\n/g, '<br>');
+        const formattedMsg = message.replace(/n/g, '<br>');
 
         const emailBody = `
             <!DOCTYPE html>
@@ -421,7 +421,7 @@ app.post('/api/send-meeting-email-all', async (req, res) => {
 
             const formattedMsg = `Dear Parent/Guardian of ${s.name},<br><br>You are invited to a <strong>${event}</strong>.<br><br>📅 <strong>Date:</strong> ${date}<br>⏰ <strong>Time:</strong> ${time}<br>📍 <strong>Venue:</strong> ${venue}<br>👤 <strong>Teacher:</strong> ${teacher}<br><br>Please make sure to attend to discuss your ward's performance. Looking forward to meeting you.<br><br>Best Regards,<br>EduNotify / ${teacher}`;
 
-            const emailBody = \`
+            const emailBody = `
                 <!DOCTYPE html>
                 <html>
                 <head>
@@ -442,24 +442,24 @@ app.post('/api/send-meeting-email-all', async (req, res) => {
                         </div>
                         <div class="email-body">
                             <div style="background: #f9f9f9; padding: 16px; border-left: 4px solid #22c55e; border-radius: 4px; margin: 16px 0;">
-                                <p style="color: #333; margin: 0; line-height: 1.6;">\${formattedMsg}</p>
+                                <p style="color: #333; margin: 0; line-height: 1.6;">${formattedMsg}</p>
                             </div>
                         </div>
                     </div>
                 </body>
                 </html>
-            \`;
+            `;
 
             try {
                 await sendEmail({
                     to: s.email,
-                    subject: \`Invitation: \${event}\`,
+                    subject: `Invitation: ${event}`,
                     html: emailBody
                 });
-                console.log(\`✅ Meeting Email sent → \${s.name} (\${s.email})\`);
+                console.log(`✅ Meeting Email sent → ${s.name} (${s.email})`);
                 results.push({ name: s.name, email: s.email, success: true });
             } catch (err) {
-                console.error(\`❌ Meeting Email FAILED → \${s.name}:\`, err.message);
+                console.error(`❌ Meeting Email FAILED → ${s.name}:`, err.message);
                 results.push({ name: s.name, email: s.email, success: false, error: err.message });
             }
 
@@ -468,7 +468,7 @@ app.post('/api/send-meeting-email-all', async (req, res) => {
         }
 
         const sent = results.filter(r => r.success).length;
-        console.log(\`📤 Email meeting bulk done: \${sent}/\${results.length} sent.\`);
+        console.log(`📤 Email meeting bulk done: ${sent}/${results.length} sent.`);
         res.json({ results, sent, total: results.length });
     } catch (err) {
         res.status(500).json({ error: 'Bulk email error', details: err.message });
@@ -582,7 +582,7 @@ app.post('/api/send-whatsapp-all', async (req, res) => {
     const results = [];
 
     for (const s of students) {
-        const digits = (s.phone || '').replace(/\D/g, '');
+        const digits = (s.phone || '').replace(/D/g, '');
         if (digits.length < 7) {
             results.push({ name: s.name, phone: s.phone, success: false, error: 'Invalid phone' });
             continue;
