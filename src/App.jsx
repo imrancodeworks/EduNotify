@@ -439,12 +439,12 @@ export default function App() {
           <div className="view-fade">
             <div className="stats-grid">
               {[
-                { label: "Total Students", value: stats.total, icon: "+", color: "#B153D7" },
-                { label: "Class Average", value: stats.classAvg + "%", icon: "+", color: "#B153D7" },
-                { label: "Distinction", value: stats.distinction, icon: "+", color: "#F9B2D7" },
-                { label: "Good", value: stats.good, icon: "+", color: "#FFB399" },
-                { label: "Average", value: stats.average, icon: "++", color: "#607274" },
-                { label: "Needs Help", value: stats.poor, icon: "++", color: "#607274" },
+                { label: "Total Students", value: stats.total, icon: "👥", color: "#B153D7" },
+                { label: "Class Average", value: stats.classAvg + "%", icon: "📊", color: "#B153D7" },
+                { label: "Distinction", value: stats.distinction, icon: "⭐", color: "#F9B2D7" },
+                { label: "Good", value: stats.good, icon: "👍", color: "#FFB399" },
+                { label: "Average", value: stats.average, icon: "📋", color: "#607274" },
+                { label: "Needs Help", value: stats.poor, icon: "⚠️", color: "#607274" },
               ].map(s => (
                 <div key={s.label} className="stat-card">
                   <div className="stat-icon" style={{ background: s.color + "22", color: s.color }}>{s.icon}</div>
@@ -457,14 +457,14 @@ export default function App() {
             <div className="dashboard-sections">
               {stats.topStudent && (
                 <div className="section-card">
-                  <h3 className="section-title">+ Top Performer</h3>
+                  <h3 className="section-title">🏆 Top Performer</h3>
                   <div className="top-performer">
                     <div className="avatar-large">
                       {stats.topStudent.name.split(" ").map(w => w[0]).join("")}
                     </div>
                     <div>
                       <div className="tp-name">{stats.topStudent.name}</div>
-                      <div className="tp-grade">{stats.topStudent.avg}% + {stats.topStudent.grade}</div>
+                      <div className="tp-grade">{stats.topStudent.avg}% ★ {stats.topStudent.grade}</div>
                       <div className="tp-marks">{stats.topStudent.total}/{stats.topStudent.max} marks</div>
                     </div>
                   </div>
@@ -473,9 +473,9 @@ export default function App() {
               <div className="section-card">
                 <h3 className="section-title">Grade Distribution</h3>
                 {[
-                  { label: "Distinction (+85%)", count: stats.distinction, color: "#B153D7" },
-                  { label: "Good (70+84%)", count: stats.good, color: "#F9B2D7" },
-                  { label: "Average (50+69%)", count: stats.average, color: "#FFB399" },
+                  { label: "Distinction (≥85%)", count: stats.distinction, color: "#B153D7" },
+                  { label: "Good (70–84%)", count: stats.good, color: "#F9B2D7" },
+                  { label: "Average (50–69%)", count: stats.average, color: "#FFB399" },
                   { label: "Poor (<50%)", count: stats.poor, color: "#607274" },
                 ].map(g => (
                   <div key={g.label} className="dist-row">

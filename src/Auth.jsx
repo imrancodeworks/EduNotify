@@ -11,6 +11,7 @@ export default function Auth({ onLogin }) {
   const [view, setView] = useState('login'); // 'login', 'signup', 'forgot', 'reset'
   const [formData, setFormData] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [token, setToken] = useState(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Check for reset token on load
   useEffect(() => {
@@ -195,30 +196,58 @@ export default function Auth({ onLogin }) {
           {(view !== 'forgot' && view !== 'reset') && (
             <div className="input-group">
               <label className="input-label">Password</label>
-              <input 
-                type="password" 
-                name="password"
-                className={`auth-input ${!validation.password ? 'invalid' : ''}`} 
-                placeholder="••••••••"
-                value={formData.password}
-                onChange={handleChange}
-                required 
-              />
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  name="password"
+                  className={`auth-input ${!validation.password ? 'invalid' : ''}`} 
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required 
+                  style={{ width: '100%', paddingRight: '40px' }}
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', padding: '0', color: '#666'
+                  }}
+                  title={showPassword ? "Hide Password" : "Show Password"}
+                >
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
             </div>
           )}
 
           {view === 'reset' && (
             <div className="input-group">
               <label className="input-label">Confirm Password</label>
-              <input 
-                type="password" 
-                name="confirmPassword"
-                className={`auth-input ${formData.confirmPassword && formData.password !== formData.confirmPassword ? 'invalid' : ''}`} 
-                placeholder="••••••••"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required 
-              />
+              <div style={{ position: 'relative' }}>
+                <input 
+                  type={showPassword ? "text" : "password"} 
+                  name="confirmPassword"
+                  className={`auth-input ${formData.confirmPassword && formData.password !== formData.confirmPassword ? 'invalid' : ''}`} 
+                  placeholder="••••••••"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required 
+                  style={{ width: '100%', paddingRight: '40px' }}
+                />
+                <button 
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)',
+                    background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', padding: '0', color: '#666'
+                  }}
+                  title={showPassword ? "Hide Password" : "Show Password"}
+                >
+                  {showPassword ? '👁️' : '👁️‍🗨️'}
+                </button>
+              </div>
             </div>
           )}
 
