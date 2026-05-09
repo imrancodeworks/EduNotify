@@ -403,6 +403,79 @@ app.post('/api/process-csv', (req, res) => {
 });
 
 // ══════════════════════════════════════════════════
+// Bulk Email for Meetings
+// ══════════════════════════════════════════════════
+app.post('/api/send-meeting-email-all', async (req, res) => {
+    try {
+        const { students, event, date, time, venue, teacher } = req.body;
+        if (!Array.isArray(students) || students.length === 0) {
+            return res.status(400).json({ error: 'No students provided.' });
+        }
+
+        const results = [];
+        for (const s of students) {
+            if (!s.email || !s.email.includes('@')) {
+                results.push({ name: s.name, email: s.email, success: false, error: 'Invalid email' });
+                continue;
+            }
+
+            const formattedMsg = `Dear Parent/Guardian of ${s.name},<br><br>You are invited to a <strong>${event}</strong>.<br><br>📅 <strong>Date:</strong> ${date}<br>⏰ <strong>Time:</strong> ${time}<br>📍 <strong>Venue:</strong> ${venue}<br>👤 <strong>Teacher:</strong> ${teacher}<br><br>Please make sure to attend to discuss your ward's performance. Looking forward to meeting you.<br><br>Best Regards,<br>EduNotify / ${teacher}`;
+
+            const emailBody = \`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                    <style>
+                        body { margin: 0; padding: 0; background-color: #f4f7f6; }
+                        .email-container { font-family: Arial, sans-serif; max-width: 520px; margin: auto; border: 1px solid #e0d4f7; border-radius: 10px; overflow: hidden; background: #ffffff; }
+                        .email-header { background: linear-gradient(135deg, #B153D7, #FFB399); padding: 24px; text-align: center; }
+                        .email-body { padding: 24px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="email-container">
+                        <div class="email-header">
+                            <h2 style="color: white; margin: 0;">Ramco Institute of Technology</h2>
+                            <p style="color: rgba(255,255,255,0.8); margin: 4px 0 0; font-size: 13px;">Meeting Invitation</p>
+                        </div>
+                        <div class="email-body">
+                            <div style="background: #f9f9f9; padding: 16px; border-left: 4px solid #22c55e; border-radius: 4px; margin: 16px 0;">
+                                <p style="color: #333; margin: 0; line-height: 1.6;">\${formattedMsg}</p>
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            \`;
+
+            try {
+                await sendEmail({
+                    to: s.email,
+                    subject: \`Invitation: \${event}\`,
+                    html: emailBody
+                });
+                console.log(\`✅ Meeting Email sent → \${s.name} (\${s.email})\`);
+                results.push({ name: s.name, email: s.email, success: true });
+            } catch (err) {
+                console.error(\`❌ Meeting Email FAILED → \${s.name}:\`, err.message);
+                results.push({ name: s.name, email: s.email, success: false, error: err.message });
+            }
+
+            // Small delay to avoid API limits on Brevo
+            await new Promise(r => setTimeout(r, 200));
+        }
+
+        const sent = results.filter(r => r.success).length;
+        console.log(\`📤 Email meeting bulk done: \${sent}/\${results.length} sent.\`);
+        res.json({ results, sent, total: results.length });
+    } catch (err) {
+        res.status(500).json({ error: 'Bulk email error', details: err.message });
+    }
+});
+
+// ══════════════════════════════════════════════════
 // WhatsApp Automation via whatsapp-web.js
 // ══════════════════════════════════════════════════
 let waClient = null;

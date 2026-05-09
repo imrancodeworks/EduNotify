@@ -114,6 +114,7 @@ export default function App() {
   const [waQr, setWaQr]                   = useState(null);
   const [waError, setWaError]             = useState(null);
   const [waSending, setWaSending]         = useState(false);
+  const [emailSending, setEmailSending]   = useState(false);
   const [waResults, setWaResults]         = useState(null);  // { sent, total, results[] }
   const [showQrModal, setShowQrModal]     = useState(false);
   const waPollingRef = useRef(null);
@@ -213,6 +214,39 @@ export default function App() {
       alert('WhatsApp send error: ' + err.message);
     } finally {
       setWaSending(false);
+    }
+  };
+
+  const sendMeetingEmail = async () => {
+    if (!meetingForm.date || !meetingForm.time || !meetingForm.venue) return alert('Please fill in all meeting details.');
+
+    const emailList = students.filter(s => s.email && !s.noContact).map(s => ({
+      name: s.name,
+      email: s.email
+    }));
+
+    if (emailList.length === 0) return alert('No valid parent email addresses found.');
+
+    setEmailSending(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/send-meeting-email-all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          students: emailList,
+          event: meetingForm.event,
+          date: meetingForm.date,
+          time: meetingForm.time,
+          venue: meetingForm.venue,
+          teacher: staffProfile.name
+        })
+      });
+      const data = await res.json();
+      alert(`Meeting invitations sent successfully via Email to ${data.sent} out of ${data.total} parents.`);
+    } catch (err) {
+      alert('Email send error: ' + err.message);
+    } finally {
+      setEmailSending(false);
     }
   };
 
@@ -775,18 +809,28 @@ export default function App() {
                       {`Dear Parent/Guardian of [Student Name],\n\nYou are invited to a ${meetingForm.event}.\n\n📅 Date: ${meetingForm.date || '[Select Date]'}\n⏰ Time: ${meetingForm.time || '[Select Time]'}\n📍 Venue: ${meetingForm.venue || '[Select Venue]'}\n👤 Teacher: ${staffProfile.name}\n\nPlease make sure to attend to discuss your ward's performance. Looking forward to meeting you.\n\nBest Regards,\nEduNotify / ${staffProfile.name}`}
                     </div>
                   </div>
-
                   <div style={{ marginTop: "24px", display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" }}>
                     <button 
                       type="button" 
                       className="btn btn-primary" 
                       disabled={waStatus !== 'ready' || waSending || !meetingForm.date || !meetingForm.time || !meetingForm.venue}
                       onClick={sendMeetingWhatsApp}
-                      style={{ padding: "12px 24px", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px" }}
+                      style={{ padding: "12px 24px", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", background: "#22c55e", borderColor: "#22c55e" }}
                     >
-                      {waSending ? <><span className="spinner" /> Sending to All...</> : "📲 Send Invites to All Parents"}
+                      {waSending ? <><span className="spinner" /> Sending...</> : "💬 Send via WhatsApp"}
                     </button>
-                    {waStatus !== 'ready' && <span style={{ color: "#ef4444", fontSize: "13px", fontWeight: "600" }}>⚠️ WhatsApp not connected. Please connect in Dashboard.</span>}
+
+                    <button 
+                      type="button" 
+                      className="btn btn-primary" 
+                      disabled={emailSending || !meetingForm.date || !meetingForm.time || !meetingForm.venue}
+                      onClick={sendMeetingEmail}
+                      style={{ padding: "12px 24px", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px", background: "#3b82f6", borderColor: "#3b82f6" }}
+                    >
+                      {emailSending ? <><span className="spinner" /> Sending...</> : "✉️ Send via Email"}
+                    </button>
+
+                    {waStatus !== 'ready' && <span style={{ color: "#ef4444", fontSize: "13px", fontWeight: "600", width: "100%" }}>⚠️ WhatsApp not connected. Please connect in Dashboard for WhatsApp invites.</span>}
                   </div>
                 </form>
               </div>
