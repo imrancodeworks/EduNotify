@@ -4,10 +4,10 @@ services:
     runtime: node
     plan: free
 
-    # Install npm packages and build React, caching Puppeteer in Render's build cache
+    # Install system Chrome dependencies, npm packages, and build React
     buildCommand: |
-      export PUPPETEER_CACHE_DIR=/opt/render/project/puppeteer
       npm install
+      npx puppeteer browsers install chrome
       npm run build
 
     # Start the Express server (serves built React + API)

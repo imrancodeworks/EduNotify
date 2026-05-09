@@ -491,12 +491,17 @@ function initWhatsApp() {
     waQrDataUrl = null;
     waErrorMsg = null;
 
+    const chromePath = puppeteer.executablePath();
+    console.log('🔍 Chrome path:', chromePath);
+    console.log('🔍 Chrome exists:', fs.existsSync(chromePath));
+    console.log('🔍 PUPPETEER_CACHE_DIR:', process.env.PUPPETEER_CACHE_DIR || '(not set)');
+
     waClient = new Client({
         authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
         webVersionCache: { type: 'none' },
         puppeteer: {
-            executablePath: puppeteer.executablePath(),
-            headless: true,
+            executablePath: chromePath,
+            headless: 'new',
             timeout: 60000,
             args: [
                 '--no-sandbox',
@@ -516,7 +521,10 @@ function initWhatsApp() {
                 '--safebrowsing-disable-auto-update',
                 '--ignore-certificate-errors',
                 '--ignore-ssl-errors',
-                '--ignore-certificate-errors-spki-list'
+                '--ignore-certificate-errors-spki-list',
+                '--disable-software-rasterizer',
+                '--disable-features=site-per-process',
+                '--js-flags=--max-old-space-size=256'
             ]
         }
     });
