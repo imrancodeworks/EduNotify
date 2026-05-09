@@ -141,7 +141,6 @@ export default function App() {
           setWaStatus(d.status);
           setWaQr(d.qr || null);
           setWaError(d.error || null);
-          if (d.status === 'qr') setShowQrModal(true);
           if (d.status === 'ready') setShowQrModal(false);
         }
       } catch {}
