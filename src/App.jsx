@@ -132,8 +132,9 @@ export default function App() {
     fetchStaffDatabase();
   }, []);
 
-  // Poll WhatsApp status every 2s when not ready
+  // Poll WhatsApp status every 1.5s
   useEffect(() => {
+    let readyShown = false;
     const poll = async () => {
       try {
         const r = await fetch(`${API_BASE}/api/whatsapp-status`);
@@ -142,12 +143,16 @@ export default function App() {
           setWaStatus(d.status);
           setWaQr(d.qr || null);
           setWaError(d.error || null);
-          if (d.status === 'ready') setShowQrModal(false);
+          // When ready: show success in modal for 3s then auto-close
+          if (d.status === 'ready' && !readyShown) {
+            readyShown = true;
+            setTimeout(() => setShowQrModal(false), 3000);
+          }
         }
       } catch {}
     };
     poll();
-    waPollingRef.current = setInterval(poll, 2000);
+    waPollingRef.current = setInterval(poll, 1500);
     return () => clearInterval(waPollingRef.current);
   }, []);
 
@@ -996,21 +1001,21 @@ export default function App() {
             </div>
             <div style={{ padding: '24px 0' }}>
               {waStatus === 'loading' && (
-                <div style={{ padding: 40, color: '#888' }}>
+                <div style={{ padding: 40, color: '#888', textAlign: 'center' }}>
                   <span className="spinner" style={{ width: 36, height: 36, borderWidth: 4 }} />
-                  <p style={{ marginTop: 16, fontSize: 14 }}>Starting WhatsApp Web...<br/>This may take 20-30 seconds.</p>
+                  <p style={{ marginTop: 16, fontSize: 14 }}>Connecting to WhatsApp...<br/>This may take 30-60 seconds on Render free-tier.</p>
                 </div>
               )}
               {waStatus === 'error' && (
-                <div style={{ padding: 40, color: '#ef4444' }}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>[X]</div>
+                <div style={{ padding: 40, color: '#ef4444', textAlign: 'center' }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>❌</div>
                   <h3 style={{ marginTop: 0 }}>Connection Failed</h3>
                   <p style={{ fontSize: 14, wordBreak: 'break-word' }}>{waError || 'Failed to launch WhatsApp Client.'}</p>
                   <button className="btn btn-outline" style={{ marginTop: 12, borderColor: '#ef4444', color: '#ef4444' }} onClick={() => setShowQrModal(false)}>Close</button>
                 </div>
               )}
               {waStatus === 'qr' && (
-                <div>
+                <div style={{ textAlign: 'center' }}>
                   {waQr ? (
                     <>
                       <img src={waQr} alt="WhatsApp QR Code" style={{ width: 240, height: 240, borderRadius: 12, border: '4px solid #B153D7', boxShadow: '0 4px 24px rgba(177,83,215,0.2)' }} />
@@ -1025,11 +1030,18 @@ export default function App() {
                 </div>
               )}
               {waStatus === 'ready' && (
-                <div style={{ padding: 30 }}>
-                  <div style={{ fontSize: 48 }}>&#10004;</div>
-                  <p style={{ color: '#22c55e', fontWeight: 700, marginTop: 8 }}>WhatsApp Connected!</p>
+                <div style={{ padding: 30, textAlign: 'center' }}>
+                  <div style={{ fontSize: 48 }}>✅</div>
+                  <p style={{ color: '#22c55e', fontWeight: 700, marginTop: 8, fontSize: 18 }}>WhatsApp Connected!</p>
                   <p style={{ fontSize: 13, color: '#888' }}>You can now send messages to all parents.</p>
                   <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => setShowQrModal(false)}>Close</button>
+                </div>
+              )}
+              {waStatus === 'disconnected' && (
+                <div style={{ padding: 40, color: '#888', textAlign: 'center' }}>
+                  <div style={{ fontSize: 48, marginBottom: 12 }}>⭕</div>
+                  <p style={{ fontSize: 14 }}>WhatsApp is not connected.</p>
+                  <button className="btn btn-primary" style={{ marginTop: 12 }} onClick={() => { connectWhatsApp(); }}>📲 Connect Now</button>
                 </div>
               )}
             </div>
