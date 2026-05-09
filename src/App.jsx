@@ -776,8 +776,8 @@ export default function App() {
           <div className="view-fade">
             <div className="dashboard-sections">
               <div className="section-card" style={{ maxWidth: "800px", margin: "0 auto" }}>
-                <h3 className="section-title">📅 Schedule Parent-Teacher Meeting</h3>
-                <p style={{ color: "#607274", marginBottom: "24px" }}>Create and send automated meeting invitations to all parents via WhatsApp.</p>
+                <h3 className="section-title">📅 Scheduled Meeting</h3>
+                <p style={{ color: "#607274", marginBottom: "24px" }}>Create and send automated meeting invitations to all parents via WhatsApp and Email.</p>
                 
                 <form className="profile-form" style={{ margin: "0" }}>
                   <div className="profile-input-group">
