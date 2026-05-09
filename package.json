@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "start": "g++ -o processor processor.cpp -std=c++11 && node server.js"
+    "start": "node server.js"
   },
   "dependencies": {
     "cors": "^2.8.6",

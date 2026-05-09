@@ -1,0 +1,29 @@
+services:
+  - type: web
+    name: edunotify
+    runtime: node
+    plan: free
+
+    # Install Chrome + build dependencies, then install npm packages and build React
+    buildCommand: |
+      apt-get update && apt-get install -y \
+        wget gnupg ca-certificates \
+        google-chrome-stable \
+        --no-install-recommends && \
+      npm install && \
+      npm run build
+
+    # Start the Express server (serves built React + API)
+    startCommand: node server.js
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: "true"          # Don't download bundled Chromium — use system Chrome
+      - key: BREVO_KEY
+        sync: false            # Set this in Render Dashboard → Environment
+      - key: SENDER_EMAIL
+        sync: false            # Set this in Render Dashboard → Environment
+      - key: FRONTEND_URL
+        sync: false            # e.g. https://edunotify.onrender.com
