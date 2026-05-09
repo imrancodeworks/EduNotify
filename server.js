@@ -406,14 +406,16 @@ app.post('/api/process-csv', (req, res) => {
 // WhatsApp Automation via whatsapp-web.js
 // ══════════════════════════════════════════════════
 let waClient = null;
-let waStatus = 'disconnected'; // 'disconnected' | 'qr' | 'loading' | 'ready'
+let waStatus = 'disconnected'; // 'disconnected' | 'qr' | 'loading' | 'ready' | 'error'
 let waQrDataUrl = null;        // base64 QR image for frontend
+let waErrorMsg = null;
 
 function initWhatsApp() {
     if (waClient) return; // already initializing/ready
 
     waStatus = 'loading';
     waQrDataUrl = null;
+    waErrorMsg = null;
 
     waClient = new Client({
         authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
@@ -424,7 +426,7 @@ function initWhatsApp() {
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-gpu',
-                '--single-process'          // needed for Render free tier (low memory)
+                '--no-zygote'
             ]
         }
     });
@@ -459,12 +461,17 @@ function initWhatsApp() {
         waClient = null;
     });
 
-    waClient.initialize();
+    waClient.initialize().catch(err => {
+        console.error('❌ WhatsApp initialization failed:', err);
+        waStatus = 'error';
+        waErrorMsg = err.message;
+        waClient = null;
+    });
 }
 
 // GET /api/whatsapp-status  — returns status + QR code if needed
 app.get('/api/whatsapp-status', (req, res) => {
-    res.json({ status: waStatus, qr: waQrDataUrl });
+    res.json({ status: waStatus, qr: waQrDataUrl, error: waErrorMsg });
 });
 
 // POST /api/whatsapp-connect  — starts the WhatsApp client

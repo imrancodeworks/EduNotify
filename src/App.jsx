@@ -110,8 +110,9 @@ export default function App() {
   const fileRef = useRef();
 
   // WhatsApp automation state
-  const [waStatus, setWaStatus]           = useState('disconnected'); // disconnected | loading | qr | ready
+  const [waStatus, setWaStatus]           = useState('disconnected'); // disconnected | loading | qr | ready | error
   const [waQr, setWaQr]                   = useState(null);
+  const [waError, setWaError]             = useState(null);
   const [waSending, setWaSending]         = useState(false);
   const [waResults, setWaResults]         = useState(null);  // { sent, total, results[] }
   const [showQrModal, setShowQrModal]     = useState(false);
@@ -131,6 +132,7 @@ export default function App() {
           const d = await r.json();
           setWaStatus(d.status);
           setWaQr(d.qr || null);
+          setWaError(d.error || null);
           if (d.status === 'qr') setShowQrModal(true);
           if (d.status === 'ready') setShowQrModal(false);
         }
@@ -564,8 +566,8 @@ export default function App() {
                 {/* +++ WhatsApp Automation Panel +++ */}
                 {(() => {
                   const waList = notifications.filter(n => n.hasPhone && !n.noContact);
-                  const statusColor = waStatus === 'ready' ? '#22c55e' : waStatus === 'qr' ? '#f59e0b' : '#94a3b8';
-                  const statusLabel = waStatus === 'ready' ? '+ Connected' : waStatus === 'qr' ? '+ Scan QR' : waStatus === 'loading' ? '+| Connecting+' : '+ Disconnected';
+                  const statusColor = waStatus === 'ready' ? '#22c55e' : waStatus === 'qr' ? '#f59e0b' : waStatus === 'error' ? '#ef4444' : '#94a3b8';
+                  const statusLabel = waStatus === 'ready' ? '+ Connected' : waStatus === 'qr' ? '+ Scan QR' : waStatus === 'loading' ? '+| Connecting+' : waStatus === 'error' ? '[X] Error' : '+ Disconnected';
                   return (
                     <div style={{ gridColumn: "1 / -1", background: "rgba(177,83,215,0.07)", border: "1.5px solid rgba(177,83,215,0.25)", borderRadius: "14px", padding: "18px 22px", display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
                       {/* Status dot */}
@@ -577,12 +579,12 @@ export default function App() {
 
                       {/* Action buttons */}
                       <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                        {waStatus === 'disconnected' && (
+                        {(waStatus === 'disconnected' || waStatus === 'error') && (
                           <button id="wa-connect-btn" className="btn btn-primary" style={{ padding: "8px 18px", fontSize: 13 }} onClick={connectWhatsApp}>
-                            + Connect WhatsApp
+                            + {waStatus === 'error' ? 'Retry Connection' : 'Connect WhatsApp'}
                           </button>
                         )}
-                        {(waStatus === 'loading' || waStatus === 'qr') && (
+                        {(waStatus === 'loading' || waStatus === 'qr' || waStatus === 'error') && (
                           <button id="wa-qr-btn" className="btn btn-outline" style={{ padding: "8px 18px", fontSize: 13 }} onClick={() => setShowQrModal(true)}>
                             {waStatus === 'qr' ? '+ View QR Code' : '+| Waiting+'}
                           </button>
@@ -861,6 +863,14 @@ export default function App() {
                 <div style={{ padding: 40, color: '#888' }}>
                   <span className="spinner" style={{ width: 36, height: 36, borderWidth: 4 }} />
                   <p style={{ marginTop: 16, fontSize: 14 }}>Starting WhatsApp Web...<br/>This may take 20-30 seconds.</p>
+                </div>
+              )}
+              {waStatus === 'error' && (
+                <div style={{ padding: 40, color: '#ef4444' }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>[X]</div>
+                  <h3 style={{ marginTop: 0 }}>Connection Failed</h3>
+                  <p style={{ fontSize: 14, wordBreak: 'break-word' }}>{waError || 'Failed to launch WhatsApp Client.'}</p>
+                  <button className="btn btn-outline" style={{ marginTop: 12, borderColor: '#ef4444', color: '#ef4444' }} onClick={() => setShowQrModal(false)}>Close</button>
                 </div>
               )}
               {waStatus === 'qr' && waQr && (
