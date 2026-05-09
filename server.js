@@ -6,6 +6,7 @@ import path from 'path';
 import nodemailer from 'nodemailer';
 import pkg from 'whatsapp-web.js';
 import qrcode from 'qrcode';
+import puppeteer from 'puppeteer';
 const { Client, LocalAuth } = pkg;
 
 const app = express();
@@ -493,6 +494,7 @@ function initWhatsApp() {
     waClient = new Client({
         authStrategy: new LocalAuth({ dataPath: path.join(process.cwd(), '.wwebjs_auth') }),
         puppeteer: {
+            executablePath: puppeteer.executablePath(),
             headless: true,
             args: [
                 '--no-sandbox',
